@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import mannwhitneyu, ttest_ind
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, f1_score, recall_score, roc_auc_score,
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, confusion_matrix,
+                             f1_score, precision_score, recall_score, roc_auc_score,
                              roc_curve)
 from sklearn.model_selection import StratifiedKFold
 
@@ -114,9 +115,12 @@ def logistic_cv(p: pd.DataFrame) -> tuple[dict, np.ndarray, np.ndarray]:
         lr = LogisticRegression().fit(bag_tr.values[:, None], y[tr])
         prob[te] = lr.predict_proba(bag_te.values[:, None])[:, 1]
     pred = (prob >= 0.5).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y, pred).ravel()
     m = {"AUC": roc_auc_score(y, prob), "accuracy": accuracy_score(y, pred),
-         "recall_AD": recall_score(y, pred), "F1": f1_score(y, pred),
-         "specificity": recall_score(1 - y, 1 - pred), "n": len(y)}
+         "balanced_accuracy": balanced_accuracy_score(y, pred),
+         "precision_AD": precision_score(y, pred), "recall_AD": recall_score(y, pred),
+         "specificity": recall_score(1 - y, 1 - pred), "F1": f1_score(y, pred),
+         "TP": tp, "FN": fn, "TN": tn, "FP": fp, "n": len(y)}
     return {k: float(v) for k, v in m.items()}, y, prob
 
 
@@ -240,9 +244,11 @@ def main() -> None:
     ac = p[p.group.isin(["A", "C"])]
     final_lr = LogisticRegression().fit(ac.bag.values[:, None], (ac.group == "A").astype(int))
     joblib.dump(final_lr, MODELS / "bag_logistic.joblib")
+    # BAG at which P(AD) = 0.5: the yes/no decision threshold shown in the report.
+    bag_threshold = float(-final_lr.intercept_[0] / final_lr.coef_[0, 0])
     (MODELS / "bag_distributions.json").write_text(json.dumps({
         LABELS[g]: p[p.group == g].bag.round(3).tolist() for g in ("C", "A", "F")} |
-        {"risk_thresholds": RISK_THRESHOLDS}, indent=2))
+        {"risk_thresholds": RISK_THRESHOLDS, "bag_threshold": bag_threshold}, indent=2))
     p.to_csv(RES / "bag_selected.csv", index=False)
     save_reference_markers()
 
@@ -252,7 +258,8 @@ def main() -> None:
                "robustness_across_configs": robustness(),
                "exploratory_alpha_only": exploratory_alpha(sel),
                "feature_directions": dirs.round(3).to_dict(orient="records"),
-               "logistic_final": {"coef": float(final_lr.coef_[0, 0]),
+               "logistic_final": {"bag_threshold_p50": bag_threshold,
+                                  "coef": float(final_lr.coef_[0, 0]),
                                   "intercept": float(final_lr.intercept_[0])},
                "sensitivity_ica_derivatives": sens}
     (RES / "summary.json").write_text(json.dumps(summary, indent=2))

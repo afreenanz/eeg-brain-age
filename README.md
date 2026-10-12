@@ -118,8 +118,20 @@ frequency, alpha power, theta/alpha ratio) change in the same direction in aging
 BAG is best interpreted as **deviation from the healthy-aging EEG pattern**, not as
 accelerated aging.
 
-**BAG → AD probability (5-fold CV, AD vs HC, n = 65):** AUC 0.70, accuracy 0.66,
-recall (AD) 0.72, specificity 0.59, F1 0.70. Final model: P(AD) = σ(−0.204 − 0.079·BAG).
+**BAG alone → AD vs HC (stratified 5-fold CV, n = 65, threshold P(AD) = 0.5):**
+
+| Metric | Value |
+|---|---|
+| Accuracy | 0.66 |
+| Balanced accuracy | 0.65 |
+| Precision (AD) | 0.68 |
+| Recall / sensitivity (AD) | 0.72 |
+| Specificity (HC) | 0.59 |
+| F1 (AD) | 0.70 |
+| AUC-ROC | 0.70 |
+| Confusion matrix | TP 26, FN 10, TN 17, FP 12 |
+
+Final model: P(AD) = σ(−0.204 − 0.079·BAG), i.e. **BAG < −2.6 years → predicted AD**.
 App risk labels: Low < 33 % ≤ Moderate ≤ 66 % < High.
 
 **Exploratory (post-hoc, not a main result):** an alpha-only model (alpha peak, alpha

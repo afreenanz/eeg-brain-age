@@ -93,7 +93,7 @@ class BrainAgePredictor:
         hc_bag = np.array(self.dist["HC"])
         ad_bag = np.array(self.dist["AD"])
         bag_z = (r["bag"] - hc_bag.mean()) / hc_bag.std(ddof=1) * np.sign(ad_bag.mean() - hc_bag.mean())
-        bag_line = (f"Brain age gap: {r['bag']:+.1f} years (healthy avg {hc_bag.mean():+.1f}, "
+        bag_line = (f"Brain age gap: {r['bag']:+.1f} years (healthy avg {0.0:.1f}, "
                     f"Alzheimer's avg {ad_bag.mean():+.1f})")
         if bag_z >= AD_LIKE_Z:
             reasons.insert(0, {"marker": "Brain age gap", "z": float(bag_z), "text":
@@ -105,36 +105,61 @@ class BrainAgePredictor:
                               "text": f"{bag_line}: within healthy range."})
         reasons.sort(key=lambda d: -d["z"])
 
-        pct, n = 100 * r["p_ad"], len(reasons)
-        if r["risk"] == "High":
-            verdict = f"{name} has a HIGHER chance of Alzheimer's-type brain changes ({pct:.0f}%)."
-        elif r["risk"] == "Low":
-            verdict = f"{name} has a LOWER chance of Alzheimer's-type brain changes ({pct:.0f}%)."
+        hc_sd = hc_bag.std(ddof=1)
+        hc_mean = hc_bag.mean() + 0.0 if abs(hc_bag.mean()) > 0.05 else 0.0
+        thr = self.dist["bag_threshold"]
+        is_ad = r["bag"] < thr
+        real = r["corrected_age"] - r["bag"]
+        diff = abs(r["bag"])
+        rel = "below" if r["bag"] < 0 else "above"
+        decision = "Alzheimer's (AD)" if is_ad else "Healthy (no AD)"
+        if is_ad:
+            why = (f"{name}'s EEG brain age is {diff:.1f} years {rel} their real age. "
+                   f"Healthy people have a gap of about {hc_mean:.1f} years "
+                   f"(typical range {hc_mean - hc_sd:+.0f} to {hc_mean + hc_sd:+.0f}); "
+                   f"Alzheimer's patients average {ad_bag.mean():+.1f} years. {name}'s gap "
+                   f"({r['bag']:+.1f}) is below the {thr:+.1f}-year cut-off, on the Alzheimer's "
+                   f"side. A strongly negative gap means the EEG does not follow the normal "
+                   f"healthy-aging pattern: Alzheimer's slows the EEG (more theta/delta, less "
+                   f"beta) in a way healthy aging does not, so the model cannot place it on "
+                   f"the healthy-aging curve.")
         else:
-            verdict = (f"{name} has a MODERATE chance of Alzheimer's-type brain changes "
-                       f"({pct:.0f}%).")
-        names = "; ".join(d["marker"].lower() for d in reasons[:3])
-        if r["risk"] == "Low":
-            because = ("Most EEG markers are in the healthy range."
-                       + (f" Borderline: {names}." if n else ""))
-        elif n:
-            because = f"Main reasons: {names}."
-        else:
-            because = "No EEG marker is outside the healthy range."
-        summary = (f"{verdict} {n} of {len(MARKERS) + 1} EEG markers look Alzheimer's-like. "
-                   f"{because}")
-        if r["risk"] != "High" and n >= 5:
-            summary += (" Note: the individual EEG markers look clearly Alzheimer's-like; the "
-                        "percentage comes only from the brain age gap, which is a weaker "
-                        "signal (AUC 0.70), so it may understate the risk.")
-        return {"verdict": verdict, "summary": summary, "reasons": reasons, "normal": normal}
+            why = (f"{name}'s EEG brain age is {diff:.1f} years {rel} their real age. "
+                   f"Healthy people have a gap of about {hc_mean:.1f} years "
+                   f"(typical range {hc_mean - hc_sd:+.0f} to {hc_mean + hc_sd:+.0f}); "
+                   f"Alzheimer's patients average {ad_bag.mean():+.1f} years. {name}'s gap "
+                   f"({r['bag']:+.1f}) is above the {thr:+.1f}-year cut-off, so the EEG follows "
+                   f"the normal healthy-aging pattern for their age.")
+        verdict = (f"Prediction for {name}: {decision}. AD probability {100 * r['p_ad']:.0f}% "
+                   f"({r['risk']} risk).")
+        summary = (f"Real age {real:.0f} y, predicted brain age {r['corrected_age']:.1f} y, "
+                   f"brain age gap {r['bag']:+.1f} y -> {decision}.")
+        return {"is_ad": bool(is_ad), "decision": decision, "verdict": verdict,
+                "summary": summary, "why": why, "threshold": thr, "real_age": real,
+                "reasons": reasons, "normal": normal}
 
     def report_text(self, r: dict, name: str = "This person") -> str:
         e = self.explain(r, name)
-        out = [e["summary"], "", "Why:"] + [f"  - {d['text']}" for d in e["reasons"]]
-        if e["normal"]:
-            out += ["", "Normal findings:"] + [f"  - {d['text']}" for d in e["normal"]]
-        out += ["", "Research prototype, not a diagnostic tool."]
+        out = [f"RESULT FOR {name.upper()}",
+               f"  Real age:            {e['real_age']:.0f} years",
+               f"  Predicted brain age: {r['corrected_age']:.1f} years",
+               f"  Brain age gap:       {r['bag']:+.1f} years   (predicted - real)",
+               f"  Decision rule:       gap below {e['threshold']:+.1f} years = Alzheimer's",
+               "",
+               f"  >> {e['verdict']}",
+               "",
+               "WHY:", f"  {e['why']}"]
+        markers = [d for d in e["reasons"] if d["marker"] != "Brain age gap"]
+        if markers:
+            title = ("SUPPORTING EEG EVIDENCE (Alzheimer's-like markers):" if e["is_ad"] else
+                     "BORDERLINE MARKERS (on the Alzheimer's side, but gap is healthy):")
+            out += ["", title] + \
+                   [f"  - {d['text']}" for d in markers]
+        normal = [d for d in e["normal"] if d["marker"] != "Brain age gap"]
+        if normal:
+            out += ["", "NORMAL MARKERS:"] + [f"  - {d['text']}" for d in normal]
+        out += ["", "Brain-age-gap model alone: 66% accuracy, AUC 0.70 (5-fold CV, 36 AD / 29 HC).",
+                "Research prototype, not a diagnostic tool."]
         return "\n".join(out)
 
 

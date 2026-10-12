@@ -72,36 +72,42 @@ def bag_plot(pred: BrainAgePredictor, bag: float):
 
 def show_report(r: dict, pred: BrainAgePredictor, name: str) -> None:
     e = pred.explain(r, name)
-    color = RISK_COLORS[r["risk"]]
-    st.subheader(f"Report: {name}")
+    color = RISK_COLORS["High"] if e["is_ad"] else RISK_COLORS["Low"]
+    st.subheader(f"Result for {name}")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Real age", f"{e['real_age']:.0f} y")
+    c2.metric("Predicted brain age", f"{r['corrected_age']:.1f} y")
+    c3.metric("Brain age gap", f"{r['bag']:+.1f} y")
     st.markdown(f"<div style='padding:0.8rem 1rem;border-radius:8px;background:{color}22;"
-                f"border-left:6px solid {color};font-size:1.05rem'>{e['summary']}</div>",
+                f"border-left:6px solid {color};font-size:1.15rem'><b>{e['verdict']}</b></div>",
                 unsafe_allow_html=True)
-    if e["reasons"]:
-        st.markdown("**Why (Alzheimer's-like findings, strongest first):**")
-        for d in e["reasons"]:
+    st.caption(f"Decision rule: brain age gap below {e['threshold']:+.1f} years = Alzheimer's.")
+    st.markdown(f"**Why:** {e['why']}")
+    markers = [d for d in e["reasons"] if d["marker"] != "Brain age gap"]
+    if markers:
+        st.markdown("**Supporting EEG evidence:**" if e["is_ad"] else
+                    "**Borderline markers (Alzheimer's side, but the gap is healthy):**")
+        for d in markers:
             st.markdown(f"- {d['text']}")
-    if e["normal"]:
-        with st.expander("Normal findings"):
-            for d in e["normal"]:
+    normal = [d for d in e["normal"] if d["marker"] != "Brain age gap"]
+    if normal:
+        with st.expander("Normal markers"):
+            for d in normal:
                 st.markdown(f"- {d['text']}")
+    st.caption("Brain-age-gap model alone: 66% accuracy, AUC 0.70 (5-fold CV, 36 AD / 29 HC).")
 
 
 def show_result(r: dict, age: float, pred: BrainAgePredictor, name: str) -> None:
     show_report(r, pred, name)
     st.subheader("Details")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Predicted brain age", f"{r['corrected_age']:.1f} y",
-              help=f"Bias-corrected. Raw model output: {r['predicted_age']:.1f} y")
+    c1.metric("Raw model output", f"{r['predicted_age']:.1f} y",
+              help="Brain age before bias correction.")
     c2.metric("Brain age gap (BAG)", f"{r['bag']:+.1f} y",
               help="Corrected brain age minus real age. In this model AD subjects show a "
                    "NEGATIVE gap on average: AD slowing and reduced beta do not match the "
                    "healthy-aging pattern, so the EEG deviates toward 'younger'.")
-    c3.metric("AD probability", f"{100 * r['p_ad']:.0f}%")
-    color = RISK_COLORS[r["risk"]]
-    st.markdown(f"<div style='padding:0.6rem 1rem;border-radius:8px;background:{color}22;"
-                f"border-left:6px solid {color};font-size:1.1rem'><b>{r['risk']} risk</b> "
-                f"(real age {age:.0f} y)</div>", unsafe_allow_html=True)
+    c3.metric("AD probability", f"{100 * r['p_ad']:.0f}%", help=f"{r['risk']} risk")
     st.pyplot(bag_plot(pred, r["bag"]))
     log = r["preprocessing"]
     st.caption(f"Recording: {log['duration_sec']:.0f} s at {log['orig_sfreq']:.0f} Hz. "

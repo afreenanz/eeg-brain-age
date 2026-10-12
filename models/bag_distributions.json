@@ -95,5 +95,6 @@
   "risk_thresholds": {
     "low": 0.33,
     "high": 0.66
-  }
+  },
+  "bag_threshold": -2.5978459265608653
 }
