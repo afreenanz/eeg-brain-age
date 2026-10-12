@@ -23,6 +23,11 @@ RISK_COLORS = {"Low": "#2a9d8f", "Moderate": "#e9c46a", "High": "#e76f51"}
 st.set_page_config(page_title="EEG Brain Age", page_icon="🧠", layout="centered")
 
 
+@st.cache_data
+def load_participants():
+    return data.adftd_participants()
+
+
 @st.cache_resource
 def get_predictor() -> BrainAgePredictor:
     return BrainAgePredictor()
@@ -146,20 +151,19 @@ def main() -> None:
                                     value=65))
         run = st.button("Predict", type="primary", disabled=not files)
     else:
-        meta = data.adftd_participants()
-        meta = meta[meta.subject_id.map(lambda s: data.adftd_path(s).exists())]
+        meta = load_participants()
         full = {"A": "Alzheimer's (AD)", "C": "Healthy (HC)", "F": "Frontotemporal (FTD)"}
         labels = {r.subject_id: f"{r.subject_id}: {full[r.group]}, age {r.age}, MMSE {r.mmse}"
                   for r in meta.itertuples()}
         if not labels:
-            st.error("No ds004504 files found. Run `python -m src.data` first.")
+            st.error("Could not load the ds004504 participant list from OpenNeuro.")
             st.stop()
         ids = list(labels)
         sid = st.selectbox("Person", ids, index=ids.index(EXAMPLE_ID) if EXAMPLE_ID in ids else 0,
                            format_func=labels.get)
         r = meta.set_index("subject_id").loc[sid]
         name = st.text_input("Name to show in the report", value="Person A")
-        age, truth, path = float(r.age), r.group, data.adftd_path(sid)
+        age, truth, path = float(r.age), r.group, sid  # resolved (downloaded if needed) on Predict
         st.caption(f"Real age {r.age} is filled in automatically. The true diagnosis is hidden "
                    "from the model and only shown afterwards to check the prediction.")
         if r.group == "C":
@@ -171,6 +175,9 @@ def main() -> None:
     try:
         if run and mode == "Upload my own EEG file":
             path = save_uploads(files)
+        elif run:
+            with st.spinner(f"Fetching {path} from OpenNeuro (first time only, ~24 MB)..."):
+                path = data.fetch_adftd(path)
         if run:
             st.divider()
             st.subheader("Output")

@@ -203,6 +203,17 @@ report), `metrics.json` (numbers quoted in the app, so no text is hand-typed).
   are not clinically calibrated.
 - The app's ComBat path (unused by the selected model) would assume a ds004504-like site.
 
+## Sharing the app online (Streamlit Community Cloud, free)
+
+The app needs no local data: dataset subjects are downloaded from OpenNeuro on demand.
+
+1. Go to https://share.streamlit.io and sign in with the GitHub account that owns this repo.
+2. Click **Create app** → **Deploy a public app from GitHub**. Repository
+   `afreenanz/eeg-brain-age`, branch `main`, main file `app.py`.
+3. Open **Advanced settings** and set **Python version = 3.11**.
+4. Click **Deploy**. The first build takes about 5 minutes (MNE, scikit-learn, etc.).
+   Then share the `https://<name>.streamlit.app` link.
+
 ## Using in Google Colab
 
 Copy the project (without `data/` and `.venv/`) to Drive, then:

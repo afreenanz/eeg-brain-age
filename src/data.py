@@ -26,9 +26,24 @@ ADFTD_DERIV_FILE = "derivatives/sub-{sid}/eeg/sub-{sid}_task-eyesclosed_eeg.set"
 AGE_BINS = [(20, 29, 25), (30, 39, 25), (40, 49, 35), (50, 59, 50), (60, 70, 65)]
 
 
+def fetch_file(dataset: str, key: str) -> Path:
+    """Return a local copy of one dataset file, downloading it from OpenNeuro's S3 mirror
+    if it is missing (used by the hosted app, where data/ is not available)."""
+    import requests
+    dst = RAW / dataset / key
+    if not dst.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        r = requests.get(f"{S3}/{dataset}/{key}", timeout=300)
+        r.raise_for_status()
+        tmp = dst.with_suffix(dst.suffix + ".part")
+        tmp.write_bytes(r.content)
+        tmp.rename(dst)
+    return dst
+
+
 def adftd_participants() -> pd.DataFrame:
     """participants.tsv of ds004504 -> subject_id, age, group (A/F/C), sex, mmse."""
-    df = pd.read_csv(RAW / ADFTD / "participants.tsv", sep="\t")
+    df = pd.read_csv(fetch_file(ADFTD, "participants.tsv"), sep="\t")
     df = df.rename(columns={"participant_id": "subject_id", "Age": "age", "Group": "group",
                             "Gender": "sex", "MMSE": "mmse"})
     df["dataset"] = ADFTD
@@ -63,6 +78,12 @@ def select_dortmund(seed: int = SEED, all_eligible: bool = False) -> pd.DataFram
 def dortmund_path(subject_id: str) -> Path:
     sid = subject_id.replace("sub-", "")
     return RAW / DORTMUND / DORTMUND_FILE.format(sid=sid)
+
+
+def fetch_adftd(subject_id: str) -> Path:
+    """Raw ds004504 recording for one subject, downloaded on demand (~24 MB)."""
+    sid = subject_id.replace("sub-", "")
+    return fetch_file(ADFTD, ADFTD_RAW_FILE.format(sid=sid))
 
 
 def adftd_path(subject_id: str, derivatives: bool = False) -> Path:
