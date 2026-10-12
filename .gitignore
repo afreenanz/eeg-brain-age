@@ -1,0 +1,8 @@
+.venv/
+data/
+__pycache__/
+*.pyc
+.DS_Store
+results/download.log
+results/streamlit.log
+notebooks/.ipynb_checkpoints/

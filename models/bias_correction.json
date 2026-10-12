@@ -1,0 +1,6 @@
+{
+  "a": 0.8812891204231204,
+  "b": 3.04588739326534,
+  "formula": "corrected = (pred - b) / a; BAG = corrected - age",
+  "fitted_on": "out-of-fold predictions of 29 ds004504 HC subjects"
+}

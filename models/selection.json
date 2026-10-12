@@ -1,0 +1,10 @@
+{
+  "features": "all",
+  "model": "ridge",
+  "strategy": "b_plus_hc",
+  "rule": "features+model: lowest Dortmund 10-fold MAE; strategy: lowest out-of-fold MAE on ds004504 HC. AD labels not used.",
+  "combat": false,
+  "include_hc": true,
+  "combat_site": "ds004504",
+  "n_train": 229
+}
