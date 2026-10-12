@@ -141,11 +141,54 @@ a negative AD gap (d = −0.55) and has an unstable bias slope (a = 0.28).
 All numbers: `results/summary.json`, `results/dortmund_cv.csv`,
 `results/transfer_comparison.csv`, `results/epochs_log.csv`.
 
+**Statistical robustness (main model):**
+
+| Analysis | Result |
+|---|---|
+| Cohen's d AD vs HC, 95% bootstrap CI (2000 resamples) | −0.93 [−1.52, −0.46] |
+| BAG difference AD − HC, 95% CI | −11.2 y [−16.9, −5.6] |
+| Cross-validated AUC, 95% CI | 0.70 [0.56, 0.82] |
+| Permutation test of CV AUC (1000 label shuffles, full CV re-run) | p = 0.002 (null mean 0.49) |
+| FTD vs HC | d = −0.17, p = 0.87 (no shift) |
+| AD vs FTD | d = −0.57, p = 0.043 (shift is AD-specific) |
+| BAG vs MMSE within AD (Spearman) | ρ = −0.08, p = 0.62 (no association with severity) |
+
+`results/figures/bag_vs_mmse.png` shows the MMSE scatter.
+
+### Replication: 513 Dortmund training subjects (`results/replication_n513/`)
+
+The pipeline was re-run on every eligible Dortmund subject (517 selected with
+`python -m src.data --all-eligible`; 513 passed preprocessing). The same selection rule
+chose regional features, ridge, and strategy (d) ComBat + HC.
+
+| | Main (200) | Replication (513) |
+|---|---|---|
+| Dortmund CV MAE / r | 9.2 y / 0.60 | 8.4 y / 0.71 |
+| ds004504 HC out-of-fold MAE / r | 7.4 y / 0.53 | 12.6 y / 0.18 |
+| Bias-correction slope a | 0.88 | 0.40 |
+| AD vs HC Cohen's d | −0.93 | −0.83 (95% CI −1.38 to −0.34) |
+| CV AUC / accuracy / recall | 0.70 / 0.66 / 0.72 | 0.71 / 0.68 / 0.78 |
+| Permutation p (AUC) | 0.002 | 0.003 |
+| AD vs FTD | p = 0.043 | p = 0.0017 |
+
+The AD effect (negative BAG, AD-specific, not related to MMSE) replicates. With 513
+Dortmund subjects the 29 ds004504 HC make up only 5% of training (13% in the main run).
+Transfer to the clinical recordings gets worse, and the weak bias slope inflates the BAG
+spread to about ±30 y.
+
+**Deviation from plan:** before this run, the 513-subject model was declared the main
+analysis. It was kept as the replication instead, for a reason based only on healthy
+subjects: much worse out-of-fold HC error (12.6 vs 7.4 y) and an unstable bias slope. AD
+labels played no part in this choice, and AD discrimination is in fact marginally higher
+in the 513 run.
+
 ## Saved artifacts (`models/`)
 
 `brain_age_regressor.joblib` (scaler + ridge pipeline), `scaler.joblib`,
 `bias_correction.json`, `bag_logistic.joblib`, `feature_names.json`,
-`preprocessing_config.json`, `selection.json`, `bag_distributions.json`.
+`preprocessing_config.json`, `selection.json`, `bag_distributions.json` (incl. the
+−2.6 y decision threshold), `reference_markers.json` (HC/AD marker references for the
+report), `metrics.json` (numbers quoted in the app, so no text is hand-typed).
 
 ## Limitations
 

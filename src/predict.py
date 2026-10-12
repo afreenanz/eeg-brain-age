@@ -47,6 +47,7 @@ class BrainAgePredictor:
         self.sel = json.loads((models_dir / "selection.json").read_text())
         self.dist = json.loads((models_dir / "bag_distributions.json").read_text())
         self.ref = json.loads((models_dir / "reference_markers.json").read_text())
+        self.metrics = json.loads((models_dir / "metrics.json").read_text())
         cb = models_dir / "combat.joblib"
         self.combat = joblib.load(cb) if self.sel.get("combat") and cb.exists() else None
 
@@ -138,6 +139,11 @@ class BrainAgePredictor:
                 "summary": summary, "why": why, "threshold": thr, "real_age": real,
                 "reasons": reasons, "normal": normal}
 
+    def performance_text(self) -> str:
+        m = self.metrics
+        return (f"Brain-age-gap model alone: {100 * m['accuracy']:.0f}% accuracy, "
+                f"AUC {m['AUC']:.2f} (5-fold CV, {m['n_AD']} AD / {m['n_HC']} HC).")
+
     def report_text(self, r: dict, name: str = "This person") -> str:
         e = self.explain(r, name)
         out = [f"RESULT FOR {name.upper()}",
@@ -158,7 +164,7 @@ class BrainAgePredictor:
         normal = [d for d in e["normal"] if d["marker"] != "Brain age gap"]
         if normal:
             out += ["", "NORMAL MARKERS:"] + [f"  - {d['text']}" for d in normal]
-        out += ["", "Brain-age-gap model alone: 66% accuracy, AUC 0.70 (5-fold CV, 36 AD / 29 HC).",
+        out += ["", self.performance_text(),
                 "Research prototype, not a diagnostic tool."]
         return "\n".join(out)
 

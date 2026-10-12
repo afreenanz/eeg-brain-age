@@ -43,10 +43,13 @@ def dortmund_participants() -> pd.DataFrame:
     return df
 
 
-def select_dortmund(seed: int = SEED) -> pd.DataFrame:
-    """Age-stratified sample. Excludes recordings flagged as possibly discontinuous."""
+def select_dortmund(seed: int = SEED, all_eligible: bool = False) -> pd.DataFrame:
+    """Age-stratified sample (or every eligible subject). Excludes recordings flagged as
+    possibly discontinuous (late_ses1 > 0)."""
     df = dortmund_participants()
     df = df[(df["session1"] == "yes") & (df["late_ses1"] == 0)]
+    if all_eligible:
+        return df[["subject_id", "dataset", "group", "age", "sex"]].reset_index(drop=True)
     rng = np.random.default_rng(seed)
     parts = []
     for lo, hi, n in AGE_BINS:
@@ -172,12 +175,14 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-derivatives", action="store_true")
     ap.add_argument("--select-only", action="store_true")
+    ap.add_argument("--all-eligible", action="store_true",
+                    help="use every eligible Dortmund subject (517) instead of the 200 sample")
     ap.add_argument("--backend", choices=["s3", "openneuro"], default="s3",
                     help="'openneuro' uses openneuro-py; 's3' fetches the same files from "
                          "OpenNeuro's public S3 mirror (default: openneuro-py failed on our network)")
     args = ap.parse_args()
 
-    sel = select_dortmund()
+    sel = select_dortmund(all_eligible=args.all_eligible)
     sel.to_csv(RAW / DORTMUND / "selected_subjects.csv", index=False)
     print(f"Selected {len(sel)} Dortmund subjects:")
     print(sel.groupby(pd.cut(sel.age, [19, 29, 39, 49, 59, 70])).size().to_string())

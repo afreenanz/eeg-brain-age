@@ -1,0 +1,40 @@
+{
+  "channels": [
+    "Fp1",
+    "Fp2",
+    "F7",
+    "F3",
+    "Fz",
+    "F4",
+    "F8",
+    "T3",
+    "C3",
+    "Cz",
+    "C4",
+    "T4",
+    "T5",
+    "P3",
+    "Pz",
+    "P4",
+    "T6",
+    "O1",
+    "O2"
+  ],
+  "rename": {
+    "T7": "T3",
+    "T8": "T4",
+    "P7": "T5",
+    "P8": "T6"
+  },
+  "reference": "average (over the 19 channels)",
+  "l_freq": 0.5,
+  "h_freq": 45.0,
+  "sfreq": 250.0,
+  "epoch_sec": 4.0,
+  "overlap_sec": 2.0,
+  "reject_ptp_uv": 150.0,
+  "flat_ptp_uv": 1.0,
+  "min_duration_sec": 30.0,
+  "min_epochs": 10,
+  "ica": false
+}

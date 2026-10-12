@@ -94,7 +94,7 @@ def show_report(r: dict, pred: BrainAgePredictor, name: str) -> None:
         with st.expander("Normal markers"):
             for d in normal:
                 st.markdown(f"- {d['text']}")
-    st.caption("Brain-age-gap model alone: 66% accuracy, AUC 0.70 (5-fold CV, 36 AD / 29 HC).")
+    st.caption(pred.performance_text())
 
 
 def show_result(r: dict, age: float, pred: BrainAgePredictor, name: str) -> None:
@@ -120,41 +120,77 @@ def main() -> None:
     st.write("Upload a resting-state, eyes-closed EEG recording with the 19 standard 10-20 "
              "channels. The model estimates brain age and converts the brain age gap into an "
              "Alzheimer's-disease risk probability.")
-    st.caption("How to read the gap: healthy controls centre on 0. AD recordings in our "
-               "data sit on average about 11 years BELOW 0 - a deviation from the healthy-"
-               "aging pattern, not 'younger brains'. The risk score is learned from this.")
     try:
         pred = get_predictor()
     except FileNotFoundError:
         st.error("Model files not found in models/. Run the training pipeline first "
                  "(see README).")
         st.stop()
+    ad_gap = pred.metrics["BAG_AD_mean"]
+    st.caption(f"How to read the gap: healthy controls centre on 0. AD recordings in our "
+               f"data sit on average about {abs(ad_gap):.0f} years "
+               f"{'BELOW' if ad_gap < 0 else 'ABOVE'} 0 - a deviation from the healthy-aging "
+               f"pattern. The risk score is learned from this.")
 
-    files = st.file_uploader("EEG file (.set + .fdt, .edf, .fif, .bdf, .vhdr)",
-                             accept_multiple_files=True,
-                             type=[e.strip(".") for e in SUPPORTED] + ["fdt", "eeg", "vmrk"])
-    name = st.text_input("Person name / ID", value="Person A")
-    age = st.number_input("Real (chronological) age", min_value=18, max_value=100, value=65)
-    c1, c2 = st.columns(2)
-    run = c1.button("Predict", type="primary", disabled=not files)
-    example = c2.button("Try example (ds004504 AD subject)")
+    st.subheader("Input")
+    mode = st.radio("Choose input", ["Pick a person from the dataset", "Upload my own EEG file"],
+                    horizontal=True)
+    run, path, age, name, truth = False, None, 65.0, "Person A", None
+
+    if mode == "Upload my own EEG file":
+        files = st.file_uploader("EEG file (.set + .fdt, .edf, .fif, .bdf, .vhdr)",
+                                 accept_multiple_files=True,
+                                 type=[e.strip(".") for e in SUPPORTED] + ["fdt", "eeg", "vmrk"])
+        name = st.text_input("Person name / ID", value="Person A")
+        age = float(st.number_input("Real (chronological) age", min_value=18, max_value=100,
+                                    value=65))
+        run = st.button("Predict", type="primary", disabled=not files)
+    else:
+        meta = data.adftd_participants()
+        meta = meta[meta.subject_id.map(lambda s: data.adftd_path(s).exists())]
+        full = {"A": "Alzheimer's (AD)", "C": "Healthy (HC)", "F": "Frontotemporal (FTD)"}
+        labels = {r.subject_id: f"{r.subject_id}: {full[r.group]}, age {r.age}, MMSE {r.mmse}"
+                  for r in meta.itertuples()}
+        if not labels:
+            st.error("No ds004504 files found. Run `python -m src.data` first.")
+            st.stop()
+        ids = list(labels)
+        sid = st.selectbox("Person", ids, index=ids.index(EXAMPLE_ID) if EXAMPLE_ID in ids else 0,
+                           format_func=labels.get)
+        r = meta.set_index("subject_id").loc[sid]
+        name = st.text_input("Name to show in the report", value="Person A")
+        age, truth, path = float(r.age), r.group, data.adftd_path(sid)
+        st.caption(f"Real age {r.age} is filled in automatically. The true diagnosis is hidden "
+                   "from the model and only shown afterwards to check the prediction.")
+        if r.group == "C":
+            st.caption("Note: healthy (HC) dataset subjects were part of the final model's "
+                       "training, so their result is optimistic. AD and FTD subjects were never "
+                       "used for training.")
+        run = st.button("Predict", type="primary")
 
     try:
-        if example:
-            meta = data.adftd_participants().set_index("subject_id").loc[EXAMPLE_ID]
-            path = data.adftd_path(EXAMPLE_ID)
-            if not path.exists():
-                raise PreprocessError(f"Example file not found at {path}. Run "
-                                      "`python -m src.data` first.")
-            st.info(f"Example: ds004504 {EXAMPLE_ID}, group AD, real age {meta.age}, "
-                    f"MMSE {meta.mmse}.")
-            with st.spinner("Preprocessing and predicting..."):
-                show_result(pred.predict_file(path, float(meta.age)), float(meta.age), pred,
-                            f"{name} (example {EXAMPLE_ID})")
-        elif run:
+        if run and mode == "Upload my own EEG file":
             path = save_uploads(files)
-            with st.spinner("Preprocessing and predicting..."):
-                show_result(pred.predict_file(path, float(age)), float(age), pred, name)
+        if run:
+            st.divider()
+            st.subheader("Output")
+            with st.spinner("Preprocessing and predicting (about 5 s)..."):
+                res = pred.predict_file(path, age)
+            if truth is not None:
+                e = pred.explain(res, name)
+                if truth == "F":
+                    st.info("True diagnosis: Frontotemporal dementia (FTD). This model only "
+                            "separates Alzheimer's from healthy, so there is no right/wrong "
+                            "answer for FTD.")
+                else:
+                    correct = e["is_ad"] == (truth == "A")
+                    true_txt = "Alzheimer's (AD)" if truth == "A" else "Healthy (HC)"
+                    acc = 100 * pred.metrics["accuracy"]
+                    verdict = ("Correct ✅" if correct else
+                               f"Wrong ❌ (the gap alone is ~{acc:.0f}% accurate)")
+                    (st.success if correct else st.warning)(
+                        f"True diagnosis: {true_txt}. Model said: {e['decision']}. {verdict}")
+            show_result(res, age, pred, name)
     except PreprocessError as e:
         st.error(str(e))
     except Exception as e:  # unreadable/corrupt files etc.

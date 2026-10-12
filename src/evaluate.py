@@ -216,6 +216,73 @@ def exploratory_alpha(sel: dict) -> dict:
                 "cohen_d_AD_vs_HC", "welch_p", "mwu_p")}, "logistic_AUC": lr_cv["AUC"]}
 
 
+N_BOOT, N_PERM = 2000, 1000
+
+
+def mmse_analysis(p: pd.DataFrame) -> dict:
+    """Does BAG track cognitive severity? Spearman BAG vs MMSE within patient groups."""
+    from scipy.stats import spearmanr
+    m = p.merge(data.adftd_participants()[["subject_id", "mmse"]], on="subject_id")
+    out = {}
+    for name, sub in [("AD", m[m.group == "A"]), ("FTD", m[m.group == "F"]),
+                      ("AD+FTD", m[m.group.isin(["A", "F"])])]:  # HC: MMSE is 30 for all
+        rho, pv = spearmanr(sub.bag, sub.mmse)
+        out[name] = {"rho": float(rho), "p": float(pv), "n": len(sub),
+                     "mmse_range": [int(sub.mmse.min()), int(sub.mmse.max())]}
+    fig, ax = plt.subplots(figsize=(5.5, 4.5))
+    for g in ("C", "A", "F"):
+        sub = m[m.group == g]
+        ax.scatter(sub.mmse, sub.bag, color=COLORS[g], s=22, label=LABELS[g])
+    a = m[m.group == "A"]
+    k, b = np.polyfit(a.mmse, a.bag, 1)
+    xs = np.array([a.mmse.min(), a.mmse.max()])
+    ax.plot(xs, k * xs + b, color=COLORS["A"], lw=1.5)
+    ax.axhline(0, color="grey", lw=0.8, ls="--")
+    ax.set_xlabel("MMSE (lower = more impaired)"); ax.set_ylabel("Brain age gap (years)")
+    ax.set_title(f"AD: Spearman rho = {out['AD']['rho']:.2f}, p = {out['AD']['p']:.3f}",
+                 fontsize=10)
+    ax.legend(fontsize=8); fig.tight_layout()
+    fig.savefig(FIG / "bag_vs_mmse.png", dpi=150); plt.close(fig)
+    return out
+
+
+def bootstrap_and_permutation(p: pd.DataFrame, y: np.ndarray, prob: np.ndarray) -> dict:
+    """95% bootstrap CIs (subjects resampled within group) and a label-permutation test
+    of the cross-validated AUC (the whole CV, incl. in-fold bias correction, is re-run)."""
+    rng = np.random.default_rng(SEED)
+    hc, ad = p[p.group == "C"].bag.values, p[p.group == "A"].bag.values
+    d_b, mean_b, auc_b = [], [], []
+    for _ in range(N_BOOT):
+        h, a = rng.choice(hc, len(hc)), rng.choice(ad, len(ad))
+        d_b.append(cohen_d(a, h)); mean_b.append(a.mean() - h.mean())
+        i_pos = rng.choice(np.where(y == 1)[0], (y == 1).sum())
+        i_neg = rng.choice(np.where(y == 0)[0], (y == 0).sum())
+        idx = np.r_[i_pos, i_neg]
+        auc_b.append(roc_auc_score(y[idx], prob[idx]))
+    ci = lambda v: [float(np.percentile(v, 2.5)), float(np.percentile(v, 97.5))]
+
+    ac = p[p.group.isin(["A", "C"])].reset_index(drop=True)
+    auc_obs = roc_auc_score(y, prob)
+    null = []
+    for _ in range(N_PERM):
+        perm = ac.copy()
+        perm["group"] = rng.permutation(perm.group.values)
+        _, yp, pp = logistic_cv(perm)
+        null.append(roc_auc_score(yp, pp))
+    null = np.array(null)
+    return {"cohen_d_CI95": ci(d_b), "BAG_diff_AD_minus_HC_CI95": ci(mean_b),
+            "cv_AUC_CI95": ci(auc_b), "perm_p_cv_AUC": float((1 + (null >= auc_obs).sum()) /
+                                                            (1 + N_PERM)),
+            "perm_null_AUC_mean": float(null.mean()), "n_boot": N_BOOT, "n_perm": N_PERM}
+
+
+def ftd_specificity(p: pd.DataFrame) -> dict:
+    """Is the BAG shift specific to AD? FTD vs HC and AD vs FTD."""
+    hc, ad, ftd = (p[p.group == g].bag for g in ("C", "A", "F"))
+    return {"FTD_vs_HC": {"d": float(cohen_d(ftd, hc)), "mwu_p": float(mannwhitneyu(ftd, hc).pvalue)},
+            "AD_vs_FTD": {"d": float(cohen_d(ad, ftd)), "mwu_p": float(mannwhitneyu(ad, ftd).pvalue)}}
+
+
 REPORT_MARKERS = ["iaf", "tar", "rel_alpha", "rel_theta", "rel_delta", "rel_beta"]
 
 
@@ -230,6 +297,14 @@ def save_reference_markers() -> None:
         ref[fam] = {g: {"mean": float(v[t.group == g].mean()), "sd": float(v[t.group == g].std())}
                     for g in ("C", "A")}
     (MODELS / "reference_markers.json").write_text(json.dumps(ref, indent=2))
+
+
+def write_display_metrics(stats: dict, lr_cv: dict) -> None:
+    """Numbers quoted in the app/report text, so nothing there is hand-typed."""
+    (MODELS / "metrics.json").write_text(json.dumps({
+        "accuracy": lr_cv["accuracy"], "AUC": lr_cv["AUC"], "precision_AD": lr_cv["precision_AD"],
+        "recall_AD": lr_cv["recall_AD"], "n_AD": stats["n_AD"], "n_HC": stats["n_HC"],
+        "BAG_AD_mean": stats["BAG_AD_mean"], "BAG_HC_mean": stats["BAG_HC_mean"]}, indent=2))
 
 
 def main() -> None:
@@ -252,10 +327,14 @@ def main() -> None:
     p.to_csv(RES / "bag_selected.csv", index=False)
     save_reference_markers()
 
+    write_display_metrics(stats, lr_cv)
     sens = sensitivity_derivatives(sel)
     dirs = feature_directions()
     summary = {"selection": sel, "bag": stats, "logistic_cv": lr_cv,
                "robustness_across_configs": robustness(),
+               "mmse_correlation": mmse_analysis(p),
+               "bootstrap_permutation": bootstrap_and_permutation(p, y, prob),
+               "ftd_specificity": ftd_specificity(p),
                "exploratory_alpha_only": exploratory_alpha(sel),
                "feature_directions": dirs.round(3).to_dict(orient="records"),
                "logistic_final": {"bag_threshold_p50": bag_threshold,
