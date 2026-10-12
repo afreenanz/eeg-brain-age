@@ -212,6 +212,22 @@ def exploratory_alpha(sel: dict) -> dict:
                 "cohen_d_AD_vs_HC", "welch_p", "mwu_p")}, "logistic_AUC": lr_cv["AUC"]}
 
 
+REPORT_MARKERS = ["iaf", "tar", "rel_alpha", "rel_theta", "rel_delta", "rel_beta"]
+
+
+def save_reference_markers() -> None:
+    """HC and AD reference values (ds004504, channel-averaged) for the per-person report."""
+    df = load_features()
+    t = df[df.dataset == data.ADFTD]
+    ref = {}
+    for fam in REPORT_MARKERS:
+        cols = [c for c in df.columns if c.rsplit("_", 1)[0] == fam and not c.startswith("reg_")]
+        v = t[cols].mean(1)
+        ref[fam] = {g: {"mean": float(v[t.group == g].mean()), "sd": float(v[t.group == g].std())}
+                    for g in ("C", "A")}
+    (MODELS / "reference_markers.json").write_text(json.dumps(ref, indent=2))
+
+
 def main() -> None:
     FIG.mkdir(parents=True, exist_ok=True)
     p, sel = selected_predictions()
@@ -228,6 +244,7 @@ def main() -> None:
         LABELS[g]: p[p.group == g].bag.round(3).tolist() for g in ("C", "A", "F")} |
         {"risk_thresholds": RISK_THRESHOLDS}, indent=2))
     p.to_csv(RES / "bag_selected.csv", index=False)
+    save_reference_markers()
 
     sens = sensitivity_derivatives(sel)
     dirs = feature_directions()

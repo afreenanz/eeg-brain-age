@@ -36,6 +36,30 @@ streamlit run app.py        # Step 7: UI
 reach the OpenNeuro API from our network); `--backend openneuro` uses openneuro-py with the
 same include patterns. Single-file inference: `python -m src.predict <file> <age>`.
 
+## Per-person report (input -> verdict + reasons)
+
+Input: one resting-state eyes-closed EEG file (19 standard 10-20 channels) + real age.
+
+```bash
+python -m src.predict path/to/recording.set 69 "Person A"
+```
+
+```
+Person A has a MODERATE chance of Alzheimer's-type brain changes (65%). 7 of 7 EEG markers
+look Alzheimer's-like. Main reasons: theta power share; theta/alpha ratio; alpha peak frequency. ...
+Why:
+  - Theta power share: 37% (healthy avg 10%, Alzheimer's avg 22%): slow theta activity is increased.
+  - Alpha peak frequency: 7.2 Hz (healthy avg 9.8 Hz, Alzheimer's avg 8.2 Hz): the main resting
+    brain rhythm is slowed, a classic EEG sign of Alzheimer's.
+  ...
+```
+
+The percentage comes from the brain-age-gap logistic model. Each reason compares one of 7
+markers (brain age gap, alpha peak, theta/alpha ratio, alpha/theta/delta/beta share) with
+the ds004504 healthy and AD reference groups (`models/reference_markers.json`). A marker
+counts as a reason when it lies more than 1 SD from the healthy mean in the Alzheimer's
+direction. The Streamlit app shows the same report (enter a name, upload, Predict).
+
 ## Pipeline
 
 1. **Preprocessing** (`src/preprocess.py`, shared by training and app): 19 channels in fixed

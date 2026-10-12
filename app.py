@@ -70,7 +70,26 @@ def bag_plot(pred: BrainAgePredictor, bag: float):
     return fig
 
 
-def show_result(r: dict, age: float, pred: BrainAgePredictor) -> None:
+def show_report(r: dict, pred: BrainAgePredictor, name: str) -> None:
+    e = pred.explain(r, name)
+    color = RISK_COLORS[r["risk"]]
+    st.subheader(f"Report: {name}")
+    st.markdown(f"<div style='padding:0.8rem 1rem;border-radius:8px;background:{color}22;"
+                f"border-left:6px solid {color};font-size:1.05rem'>{e['summary']}</div>",
+                unsafe_allow_html=True)
+    if e["reasons"]:
+        st.markdown("**Why (Alzheimer's-like findings, strongest first):**")
+        for d in e["reasons"]:
+            st.markdown(f"- {d['text']}")
+    if e["normal"]:
+        with st.expander("Normal findings"):
+            for d in e["normal"]:
+                st.markdown(f"- {d['text']}")
+
+
+def show_result(r: dict, age: float, pred: BrainAgePredictor, name: str) -> None:
+    show_report(r, pred, name)
+    st.subheader("Details")
     c1, c2, c3 = st.columns(3)
     c1.metric("Predicted brain age", f"{r['corrected_age']:.1f} y",
               help=f"Bias-corrected. Raw model output: {r['predicted_age']:.1f} y")
@@ -108,6 +127,7 @@ def main() -> None:
     files = st.file_uploader("EEG file (.set + .fdt, .edf, .fif, .bdf, .vhdr)",
                              accept_multiple_files=True,
                              type=[e.strip(".") for e in SUPPORTED] + ["fdt", "eeg", "vmrk"])
+    name = st.text_input("Person name / ID", value="Person A")
     age = st.number_input("Real (chronological) age", min_value=18, max_value=100, value=65)
     c1, c2 = st.columns(2)
     run = c1.button("Predict", type="primary", disabled=not files)
@@ -123,11 +143,12 @@ def main() -> None:
             st.info(f"Example: ds004504 {EXAMPLE_ID}, group AD, real age {meta.age}, "
                     f"MMSE {meta.mmse}.")
             with st.spinner("Preprocessing and predicting..."):
-                show_result(pred.predict_file(path, float(meta.age)), float(meta.age), pred)
+                show_result(pred.predict_file(path, float(meta.age)), float(meta.age), pred,
+                            f"{name} (example {EXAMPLE_ID})")
         elif run:
             path = save_uploads(files)
             with st.spinner("Preprocessing and predicting..."):
-                show_result(pred.predict_file(path, float(age)), float(age), pred)
+                show_result(pred.predict_file(path, float(age)), float(age), pred, name)
     except PreprocessError as e:
         st.error(str(e))
     except Exception as e:  # unreadable/corrupt files etc.
