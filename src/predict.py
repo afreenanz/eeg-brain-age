@@ -38,6 +38,45 @@ MARKERS = {
 AD_LIKE_Z = 1.0  # beyond 1 SD of the healthy mean, in the AD direction
 
 
+class CNNClassifier:
+    """CWT-scalogram CNN (AD vs HC) trained on all ds004504 AD + HC subjects."""
+
+    def __init__(self, models_dir: Path = MODELS):
+        import torch
+        from src.cnn import DEVICE, ScalogramCNN
+        self.torch, self.device = torch, DEVICE
+        self.model = ScalogramCNN().to(DEVICE)
+        self.model.load_state_dict(torch.load(models_dir / "cnn_classifier.pt",
+                                              map_location=DEVICE))
+        self.model.eval()
+        z = np.load(models_dir / "cnn_norm.npz")
+        self.mu, self.sd = z["mu"], z["sd"]
+        self.metrics = json.loads((models_dir / "cnn_metrics.json").read_text())
+        stk = models_dir / "combined_logistic.joblib"
+        self.stacker = joblib.load(stk) if stk.exists() else None
+
+    def predict(self, X: np.ndarray) -> dict:
+        from src.cnn import predict_epochs
+        from src.gradcam import band_share, gradcam
+        from src.scalograms import FREQS, pick_epochs, scalogram
+        S = scalogram(X[pick_epochs(len(X))]).astype(np.float32)
+        Z = ((S - self.mu) / self.sd).astype(np.float32)
+        p_epoch = predict_epochs(self.model, Z)
+        p = float(p_epoch.mean())
+        cam, _ = gradcam(self.model, Z, target_ad=p >= 0.5)
+        profile = cam.mean((0, 2))
+        return {"p_ad": p, "is_ad": p >= 0.5, "n_scalograms": int(len(Z)),
+                "share_epochs_ad": float((p_epoch >= 0.5).mean()),
+                "gradcam_profile": profile.tolist(), "gradcam_freqs": FREQS.tolist(),
+                "band_importance": band_share(profile)}
+
+    def combined(self, p_cnn: float, bag: float) -> float | None:
+        if self.stacker is None:
+            return None
+        lg = np.log(np.clip(p_cnn, 1e-4, 1 - 1e-4) / (1 - np.clip(p_cnn, 1e-4, 1 - 1e-4)))
+        return float(self.stacker.predict_proba([[lg, bag]])[0, 1])
+
+
 class BrainAgePredictor:
     def __init__(self, models_dir: Path = MODELS):
         self.reg = joblib.load(models_dir / "brain_age_regressor.joblib")
@@ -50,6 +89,10 @@ class BrainAgePredictor:
         self.metrics = json.loads((models_dir / "metrics.json").read_text())
         cb = models_dir / "combat.joblib"
         self.combat = joblib.load(cb) if self.sel.get("combat") and cb.exists() else None
+        try:
+            self.cnn = CNNClassifier(models_dir)
+        except (FileNotFoundError, ImportError):  # brain-age part works without the CNN
+            self.cnn = None
 
     def risk_label(self, p_ad: float) -> str:
         t = self.dist["risk_thresholds"]
@@ -65,7 +108,11 @@ class BrainAgePredictor:
         corrected = (pred - self.bias["b"]) / self.bias["a"]
         bag = corrected - age
         p_ad = float(self.lr.predict_proba([[bag]])[0, 1])
-        return {"predicted_age": pred, "corrected_age": corrected, "bag": bag,
+        cnn = None
+        if self.cnn is not None:
+            cnn = self.cnn.predict(X)
+            cnn["p_combined"] = self.cnn.combined(cnn["p_ad"], bag)
+        return {"cnn": cnn, "predicted_age": pred, "corrected_age": corrected, "bag": bag,
                 "p_ad": p_ad, "risk": self.risk_label(p_ad), "n_epochs": int(len(X)),
                 "iaf_mean": float(feats.filter(like="iaf_").mean()),
                 "markers": {m: float(feats[[c for c in feats.index if c.rsplit("_", 1)[0] == m
@@ -144,6 +191,22 @@ class BrainAgePredictor:
         return (f"Brain-age-gap model alone: {100 * m['accuracy']:.0f}% accuracy, "
                 f"AUC {m['AUC']:.2f} (5-fold CV, {m['n_AD']} AD / {m['n_HC']} HC).")
 
+    def cnn_lines(self, r: dict, name: str) -> list[str]:
+        c = r.get("cnn")
+        if not c:
+            return []
+        m = self.cnn.metrics
+        dec = "Alzheimer's (AD)" if c["is_ad"] else "Healthy (no AD)"
+        bands = sorted(c["band_importance"].items(), key=lambda kv: -kv[1])[:2]
+        lines = [f"  >> CNN CLASSIFIER (main): {dec}. P(AD) {100 * c['p_ad']:.0f}% "
+                 f"({100 * c['share_epochs_ad']:.0f}% of {c['n_scalograms']} EEG segments "
+                 f"looked AD-like). Accuracy {100 * m['accuracy']:.0f}%, AUC {m['AUC']:.2f}.",
+                 f"     Decision driven mostly by {bands[0][0]} and {bands[1][0]} activity "
+                 f"(Grad-CAM)."]
+        if c.get("p_combined") is not None:
+            lines.append(f"     CNN + brain age gap combined: P(AD) {100 * c['p_combined']:.0f}%")
+        return lines
+
     def report_text(self, r: dict, name: str = "This person") -> str:
         e = self.explain(r, name)
         out = [f"RESULT FOR {name.upper()}",
@@ -152,7 +215,8 @@ class BrainAgePredictor:
                f"  Brain age gap:       {r['bag']:+.1f} years   (predicted - real)",
                f"  Decision rule:       gap below {e['threshold']:+.1f} years = Alzheimer's",
                "",
-               f"  >> {e['verdict']}",
+               *self.cnn_lines(r, name),
+               f"  >> Brain age gap says: {e['verdict']}",
                "",
                "WHY:", f"  {e['why']}"]
         markers = [d for d in e["reasons"] if d["marker"] != "Brain age gap"]

@@ -1,0 +1,36 @@
+{
+  "AD": {
+    "band_importance_vs_average": {
+      "delta": 0.8258492946624756,
+      "theta": 1.2927662134170532,
+      "alpha": 1.3944166898727417,
+      "beta": 1.0735116004943848,
+      "gamma": 0.40207594633102417
+    },
+    "top_channels": [
+      "F8",
+      "T6",
+      "T3",
+      "P4",
+      "F7"
+    ],
+    "n_epochs_explained": 4165
+  },
+  "HC": {
+    "band_importance_vs_average": {
+      "delta": 0.5789868235588074,
+      "theta": 1.1170146465301514,
+      "alpha": 1.3684056997299194,
+      "beta": 1.402151107788086,
+      "gamma": 1.017113447189331
+    },
+    "top_channels": [
+      "O2",
+      "Cz",
+      "Fp2",
+      "Fp1",
+      "T5"
+    ],
+    "n_epochs_explained": 4316
+  }
+}

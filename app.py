@@ -24,6 +24,23 @@ st.set_page_config(page_title="EEG Brain Age", page_icon="🧠", layout="centere
 
 
 @st.cache_data
+def load_cnn_oof() -> dict:
+    f = data.ROOT / "results" / "classifier" / "cnn_oof.csv"
+    return dict(pd.read_csv(f)[["subject_id", "p_ad"]].values) if f.exists() else {}
+
+
+def use_oof(res: dict, sid: str, pred: BrainAgePredictor) -> None:
+    """Dataset subjects were in the final CNN's training set; show their honest
+    out-of-fold probability instead (Grad-CAM still comes from the final model)."""
+    oof = load_cnn_oof()
+    c = res.get("cnn")
+    if c and sid in oof:
+        c["final_is_ad"] = c["is_ad"]
+        c["p_ad"], c["is_ad"], c["oof"] = float(oof[sid]), bool(oof[sid] >= 0.5), True
+        c["p_combined"] = pred.cnn.combined(c["p_ad"], res["bag"])
+
+
+@st.cache_data
 def load_participants():
     return data.adftd_participants()
 
@@ -75,17 +92,68 @@ def bag_plot(pred: BrainAgePredictor, bag: float):
     return fig
 
 
+def gradcam_plot(c: dict):
+    f, prof = np.array(c["gradcam_freqs"]), np.array(c["gradcam_profile"])
+    fig, ax = plt.subplots(figsize=(7, 2.6))
+    color = RISK_COLORS["High"] if c["is_ad"] else RISK_COLORS["Low"]
+    ax.fill_between(f, prof / prof.max(), color=color, alpha=0.35)
+    ax.plot(f, prof / prof.max(), color=color, lw=2)
+    for b, (lo, hi) in {"delta": (1, 4), "theta": (4, 8), "alpha": (8, 13),
+                        "beta": (13, 30), "gamma": (30, 40)}.items():
+        ax.axvspan(lo, hi, color="grey", alpha=0.05)
+        ax.text(np.sqrt(lo * hi), 1.03, b, ha="center", fontsize=8)
+    ax.set_xscale("log"); ax.set_xlabel("Frequency (Hz)"); ax.set_yticks([])
+    ax.set_title("Grad-CAM: which brain-wave frequencies drove the CNN decision", fontsize=9)
+    for sp in ("top", "right", "left"):
+        ax.spines[sp].set_visible(False)
+    fig.tight_layout()
+    return fig
+
+
+def banner(text: str, is_ad: bool, size: str = "1.15rem") -> None:
+    color = RISK_COLORS["High"] if is_ad else RISK_COLORS["Low"]
+    st.markdown(f"<div style='padding:0.8rem 1rem;border-radius:8px;background:{color}22;"
+                f"border-left:6px solid {color};font-size:{size}'><b>{text}</b></div>",
+                unsafe_allow_html=True)
+
+
+def show_cnn(r: dict, pred: BrainAgePredictor, name: str) -> None:
+    c = r.get("cnn")
+    if not c:
+        return
+    m = pred.cnn.metrics
+    st.markdown("#### 1. CNN classifier (main decision)")
+    dec = "Alzheimer's (AD)" if c["is_ad"] else "Healthy (no AD)"
+    banner(f"CNN prediction for {name}: {dec}. P(AD) {100 * c['p_ad']:.0f}%", c["is_ad"])
+    note = ("out-of-fold: from the cross-validation model that never saw this person"
+            if c.get("oof") else f"{100 * c['share_epochs_ad']:.0f}% of "
+            f"{c['n_scalograms']} EEG segments looked AD-like")
+    st.caption(f"{note}. CNN accuracy {100 * m['accuracy']:.0f}%, AUC {m['AUC']:.2f} "
+               f"(subject-level 10-fold CV, {m['n']} people).")
+    bands = sorted(c["band_importance"].items(), key=lambda kv: -kv[1])
+    st.markdown(f"**Why (Grad-CAM):** the decision relied most on **{bands[0][0]}** and "
+                f"**{bands[1][0]}** activity, least on {bands[-1][0]}.")
+    if c.get("oof") and c["final_is_ad"] != c["is_ad"]:
+        st.caption("Note: Grad-CAM explains the final model, which was trained on this person "
+                   f"and classified them as {'AD' if c['final_is_ad'] else 'Healthy'}. "
+                   "The out-of-fold model above disagreed.")
+    st.pyplot(gradcam_plot(c))
+    if c.get("p_combined") is not None:
+        st.caption(f"CNN + brain age gap combined: P(AD) {100 * c['p_combined']:.0f}% "
+                   "(adding the gap did not significantly improve accuracy).")
+    st.markdown("#### 2. Brain age (explainable second opinion)")
+
+
 def show_report(r: dict, pred: BrainAgePredictor, name: str) -> None:
     e = pred.explain(r, name)
-    color = RISK_COLORS["High"] if e["is_ad"] else RISK_COLORS["Low"]
     st.subheader(f"Result for {name}")
+    show_cnn(r, pred, name)
     c1, c2, c3 = st.columns(3)
     c1.metric("Real age", f"{e['real_age']:.0f} y")
     c2.metric("Predicted brain age", f"{r['corrected_age']:.1f} y")
     c3.metric("Brain age gap", f"{r['bag']:+.1f} y")
-    st.markdown(f"<div style='padding:0.8rem 1rem;border-radius:8px;background:{color}22;"
-                f"border-left:6px solid {color};font-size:1.15rem'><b>{e['verdict']}</b></div>",
-                unsafe_allow_html=True)
+    banner(("Brain age gap says: " if r.get("cnn") else "") + e["verdict"], e["is_ad"],
+           "1.0rem" if r.get("cnn") else "1.15rem")
     st.caption(f"Decision rule: brain age gap below {e['threshold']:+.1f} years = Alzheimer's.")
     st.markdown(f"**Why:** {e['why']}")
     markers = [d for d in e["reasons"] if d["marker"] != "Brain age gap"]
@@ -166,10 +234,9 @@ def main() -> None:
         age, truth, path = float(r.age), r.group, sid  # resolved (downloaded if needed) on Predict
         st.caption(f"Real age {r.age} is filled in automatically. The true diagnosis is hidden "
                    "from the model and only shown afterwards to check the prediction.")
-        if r.group == "C":
-            st.caption("Note: healthy (HC) dataset subjects were part of the final model's "
-                       "training, so their result is optimistic. AD and FTD subjects were never "
-                       "used for training.")
+        st.caption("The CNN result shown for dataset subjects is out-of-fold (from the "
+                   "cross-validation model that never saw them). For the brain age model, "
+                   "healthy (HC) subjects were part of training, so their gap is optimistic.")
         run = st.button("Predict", type="primary")
 
     try:
@@ -181,22 +248,29 @@ def main() -> None:
         if run:
             st.divider()
             st.subheader("Output")
-            with st.spinner("Preprocessing and predicting (about 5 s)..."):
+            with st.spinner("Preprocessing and predicting (about 10 s)..."):
                 res = pred.predict_file(path, age)
             if truth is not None:
+                use_oof(res, sid, pred)
                 e = pred.explain(res, name)
                 if truth == "F":
                     st.info("True diagnosis: Frontotemporal dementia (FTD). This model only "
                             "separates Alzheimer's from healthy, so there is no right/wrong "
                             "answer for FTD.")
                 else:
-                    correct = e["is_ad"] == (truth == "A")
                     true_txt = "Alzheimer's (AD)" if truth == "A" else "Healthy (HC)"
-                    acc = 100 * pred.metrics["accuracy"]
-                    verdict = ("Correct ✅" if correct else
-                               f"Wrong ❌ (the gap alone is ~{acc:.0f}% accurate)")
-                    (st.success if correct else st.warning)(
-                        f"True diagnosis: {true_txt}. Model said: {e['decision']}. {verdict}")
+                    checks = []
+                    if res.get("cnn"):
+                        checks.append(("CNN classifier", res["cnn"]["is_ad"],
+                                       pred.cnn.metrics["accuracy"]))
+                    checks.append(("Brain age gap", e["is_ad"], pred.metrics["accuracy"]))
+                    for label, said_ad, acc in checks:
+                        correct = said_ad == (truth == "A")
+                        said = "Alzheimer's (AD)" if said_ad else "Healthy (no AD)"
+                        verdict = ("Correct ✅" if correct else
+                                   f"Wrong ❌ (~{100 * acc:.0f}% accurate overall)")
+                        (st.success if correct else st.warning)(
+                            f"True diagnosis: {true_txt}. {label} said: {said}. {verdict}")
             show_result(res, age, pred, name)
     except PreprocessError as e:
         st.error(str(e))

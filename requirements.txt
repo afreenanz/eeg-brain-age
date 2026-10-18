@@ -11,3 +11,6 @@ streamlit==1.65.0
 openneuro-py==2026.9.1
 requests==2.34.2
 eeglabio==0.1.4
+# CNN classifier. CPU wheels keep the cloud install small (no CUDA download).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1

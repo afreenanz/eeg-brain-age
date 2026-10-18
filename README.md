@@ -182,13 +182,71 @@ subjects: much worse out-of-fold HC error (12.6 vs 7.4 y) and an unstable bias s
 labels played no part in this choice, and AD discrimination is in fact marginally higher
 in the 513 run.
 
+## CNN classifier: AD vs HC (`src/scalograms.py`, `src/cnn.py`, `src/gradcam.py`, `src/combine.py`)
+
+Implements the Phase 1 design (CWT scalograms, CNN, Grad-CAM), adapted to the data:
+ds004504 has **no MCI subjects**, so the task is **AD vs HC** (36 vs 29), not sMCI vs pMCI.
+
+```bash
+python -m src.scalograms   # Morlet CWT, 1-40 Hz (40 log-spaced), 64 time bins, <=150 epochs/subject
+python -m src.cnn          # subject-level 10-fold CV, 3 seeds -> results/classifier/
+python -m src.combine      # CNN vs brain age gap vs combined
+python -m src.gradcam      # final CNN on all 65 subjects + Grad-CAM figures
+```
+
+- Input: same cached preprocessing as the brain-age model; each 4 s epoch becomes a
+  19 channel × 40 frequency × 64 time scalogram (log power).
+- Model: 3 conv blocks (16-32-32 filters, BatchNorm, ReLU), global average pooling,
+  dropout 0.5, about 17k parameters.
+- No leakage: folds split by subject; early stopping on validation subjects taken from the
+  training side (validation loss); normalization fitted on training subjects only. A
+  subject's P(AD) is the mean over its epochs.
+
+**Results (subject-level 10-fold CV, n = 65):**
+
+| Run | AUC | Accuracy | Precision | Recall | Specificity | F1 |
+|---|---|---|---|---|---|---|
+| seed 42 | 0.86 | 0.80 | 0.81 | 0.83 | 0.76 | 0.82 |
+| seed 7 | 0.90 | 0.85 | 0.88 | 0.83 | 0.86 | 0.86 |
+| seed 123 | 0.90 | 0.82 | 0.83 | 0.83 | 0.79 | 0.83 |
+| **mean** | **0.89** | **0.82** | 0.84 | 0.83 | 0.80 | 0.84 |
+
+The CNN meets the Phase 1 target NFR1 (AUC ≥ 0.75).
+
+**Combining with the brain age gap (seed 42, repeated 5-fold stacking):**
+
+| Model | AUC | Accuracy |
+|---|---|---|
+| Brain age gap only | 0.73 | 0.66 |
+| CNN only | 0.86 | 0.80 |
+| CNN + brain age gap | 0.87 | 0.78 |
+
+The combination did not significantly improve on the CNN (ΔAUC = +0.012,
+95% CI -0.06 to +0.08,
+p = 0.74), and the same holds for all three seeds. Both
+models read the same EEG slowing. The brain age gap's role is an interpretable continuous
+score, not extra accuracy.
+
+**Grad-CAM** (`results/figures/cnn_gradcam.png`, `cnn_channel_importance.png`): band
+importance relative to average (1.0 = average):
+AD decisions: delta 0.83, theta 1.29, alpha 1.39, beta 1.07;
+HC decisions: delta 0.58, theta 1.12, alpha 1.37, beta 1.40.
+The CNN identifies AD from theta + alpha and HC from alpha + beta (NFR2: theta yes, delta
+weaker than expected). The top AD channels are temporal/parietal (F8, T6, T3, P4).
+These are descriptive, from the final model trained on all 65 subjects.
+
+**In the app**, dataset subjects show their *out-of-fold* CNN probability (from a model
+that never saw them); uploaded files use the final model. Not yet done from the Phase 1
+plan: GAN augmentation (optional; risky with 65 subjects) and FTD as a third class.
+
 ## Saved artifacts (`models/`)
 
 `brain_age_regressor.joblib` (scaler + ridge pipeline), `scaler.joblib`,
 `bias_correction.json`, `bag_logistic.joblib`, `feature_names.json`,
 `preprocessing_config.json`, `selection.json`, `bag_distributions.json` (incl. the
 −2.6 y decision threshold), `reference_markers.json` (HC/AD marker references for the
-report), `metrics.json` (numbers quoted in the app, so no text is hand-typed).
+report), `metrics.json` (numbers quoted in the app, so no text is hand-typed). CNN: `cnn_classifier.pt`,
+`cnn_norm.npz`, `cnn_config.json`, `cnn_metrics.json`, `combined_logistic.joblib`.
 
 ## Limitations
 
