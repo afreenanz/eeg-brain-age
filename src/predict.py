@@ -54,6 +54,8 @@ class CNNClassifier:
         self.metrics = json.loads((models_dir / "cnn_metrics.json").read_text())
         stk = models_dir / "combined_logistic.joblib"
         self.stacker = joblib.load(stk) if stk.exists() else None
+        cm = models_dir / "combined_metrics.json"
+        self.combined_metrics = json.loads(cm.read_text()) if cm.exists() else None
 
     def predict(self, X: np.ndarray) -> dict:
         from src.cnn import predict_epochs

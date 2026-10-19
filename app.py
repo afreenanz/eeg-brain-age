@@ -138,9 +138,13 @@ def show_cnn(r: dict, pred: BrainAgePredictor, name: str) -> None:
                    f"and classified them as {'AD' if c['final_is_ad'] else 'Healthy'}. "
                    "The out-of-fold model above disagreed.")
     st.pyplot(gradcam_plot(c))
-    if c.get("p_combined") is not None:
+    cm = pred.cnn.combined_metrics
+    if c.get("p_combined") is not None and cm:
+        sig = "significantly" if cm["AUC_diff_p"] < 0.05 else "did not significantly"
         st.caption(f"CNN + brain age gap combined: P(AD) {100 * c['p_combined']:.0f}% "
-                   "(adding the gap did not significantly improve accuracy).")
+                   f"(combined AUC {cm['AUC_combined']:.2f} vs CNN {cm['AUC_cnn']:.2f}; adding "
+                   f"the gap {sig} {'improved' if sig == 'significantly' else 'improve'} it, "
+                   f"p = {cm['AUC_diff_p']:.2f}).")
     st.markdown("#### 2. Brain age (explainable second opinion)")
 
 

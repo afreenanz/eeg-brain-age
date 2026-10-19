@@ -112,6 +112,10 @@ def main() -> None:
                                  "coef_bag": float(final.coef_[0, 1]),
                                  "intercept": float(final.intercept_[0])}}
     (OUT / "combined_metrics.json").write_text(json.dumps(summary, indent=2))
+    cmp_ = res["combined_vs_cnn_AUC"]
+    (MODELS / "combined_metrics.json").write_text(json.dumps(
+        {"AUC_cnn": res["cnn_only"]["AUC"], "AUC_combined": res["combined"]["AUC"],
+         "AUC_diff": cmp_["diff"], "AUC_diff_p": cmp_["p_two_sided"]}, indent=2))
     keys = ["AUC", "accuracy", "precision_AD", "recall_AD", "specificity", "F1"]
     print(pd.DataFrame({k: res[k] for k in ("bag_only", "cnn_only", "combined")}).T[keys]
           .round(3).to_string())
