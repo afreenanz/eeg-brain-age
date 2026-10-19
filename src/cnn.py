@@ -82,12 +82,12 @@ def subject_probs(p_epoch, owner):
     return pd.Series(p_epoch).groupby(owner).mean()
 
 
-def train_one(Xtr, ytr, Xva, yva, own_va, seed):
+def train_one(Xtr, ytr, Xva, yva, own_va, seed, make_model=None):
     """Train with early stopping on validation loss (validation subjects only).
     Val AUC on ~9 subjects saturates at 1.0 after 1-2 epochs, so it cannot pick an epoch."""
     torch.manual_seed(seed)
     np.random.seed(seed)
-    model = ScalogramCNN().to(DEVICE)
+    model = (make_model or ScalogramCNN)().to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
     pos_w = torch.tensor(float((ytr == 0).sum() / max((ytr == 1).sum(), 1)),
                          dtype=torch.float32, device=DEVICE)
@@ -137,8 +137,19 @@ def metrics(y, p, thr=0.5) -> dict:
             "n": int(len(y))}
 
 
-def cross_validate(seed: int = SEED, verbose: bool = True) -> tuple[pd.DataFrame, list]:
+def cross_validate(seed: int = SEED, verbose: bool = True,
+                   permute_seed: int | None = None, transform=None,
+                   make_model=None, explain: bool = False) -> tuple[pd.DataFrame, list]:
+    """permute_seed: shuffle AD/HC labels across subjects (permutation test null run).
+    transform: function applied to each subject's scalogram array (ablations).
+    make_model: model factory (default ScalogramCNN).
+    explain: also return out-of-fold Grad-CAM frequency profiles for each test subject."""
     meta, S = load_subjects()
+    if transform is not None:
+        S = {k: transform(v) for k, v in S.items()}
+    if permute_seed is not None:
+        meta = meta.copy()
+        meta["group"] = np.random.default_rng(permute_seed).permutation(meta.group.values)
     labels = dict(zip(meta.subject_id, (meta.group == "A").astype(int)))
     y_subj = meta.group.eq("A").astype(int).values
     outer = StratifiedKFold(N_FOLDS, shuffle=True, random_state=seed)
@@ -153,10 +164,19 @@ def cross_validate(seed: int = SEED, verbose: bool = True) -> tuple[pd.DataFrame
         Xt, _, ot = stack(te_ids, S)
         mu, sd = norm_stats(Xf)
         Xf, Xv, Xt = (Xf - mu) / sd, (Xv - mu) / sd, (Xt - mu) / sd
-        model, h = train_one(Xf, yf, Xv, yv, ov, seed + fold)
+        model, h = train_one(Xf, yf, Xv, yv, ov, seed + fold, make_model=make_model)
         ps = subject_probs(predict_epochs(model, Xt), ot)
+        cams = {}
+        if explain:
+            from src.gradcam import gradcam
+            for s in te_ids:
+                cam, _ = gradcam(model, Xt[ot == s], target_ad=bool(ps[s] >= 0.5))
+                cams[s] = cam.mean((0, 2))
         for s in te_ids:
-            rows.append({"subject_id": s, "fold": fold, "p_ad": float(ps[s])})
+            row = {"subject_id": s, "fold": fold, "p_ad": float(ps[s])}
+            if explain:
+                row["gradcam_profile"] = cams[s].tolist()
+            rows.append(row)
         hist += [{**r, "fold": fold} for r in h]
         if verbose:
             acc = np.mean([(ps[s] >= .5) == labels[s] for s in te_ids])

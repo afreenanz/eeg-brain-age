@@ -1,0 +1,121 @@
+\providecommand{\tbd}{\textcolor{red}{\textbf{TBD}}}
+\newcommand{\dmMAE}{9.2}
+\newcommand{\dmR}{0.60}
+\newcommand{\dmRtwo}{0.35}
+\newcommand{\dmN}{200}
+\newcommand{\hcMAE}{7.4}
+\newcommand{\hcR}{0.53}
+\newcommand{\hcRtwo}{-1.9}
+\newcommand{\biasA}{0.88}
+\newcommand{\bagHC}{0.0}
+\newcommand{\bagHCsd}{8.7}
+\newcommand{\bagAD}{-11.2}
+\newcommand{\bagADsd}{14.2}
+\newcommand{\bagFTD}{-2.2}
+\newcommand{\bagFTDsd}{17.8}
+\newcommand{\bagD}{-0.93}
+\newcommand{\bagWelchP}{p < 0.001}
+\newcommand{\bagMwuP}{p < 0.001}
+\newcommand{\bagWelchT}{-3.90}
+\newcommand{\bagDci}{[$-1.52$, $-0.46$]}
+\newcommand{\bagDiffCI}{[$-16.9$, $-5.6$]}
+\newcommand{\bagAUCci}{[$0.56$, $0.82$]}
+\newcommand{\bagPermP}{p = 0.002}
+\newcommand{\bagAUC}{0.70}
+\newcommand{\bagAcc}{66\%}
+\newcommand{\bagPrec}{68\%}
+\newcommand{\bagRec}{72\%}
+\newcommand{\bagSpec}{59\%}
+\newcommand{\bagFone}{0.70}
+\newcommand{\bagThr}{-2.6}
+\newcommand{\ftdHCd}{-0.17}
+\newcommand{\ftdHCp}{p = 0.87}
+\newcommand{\adFTDd}{-0.57}
+\newcommand{\adFTDp}{p = 0.04}
+\newcommand{\mmseRho}{-0.08}
+\newcommand{\mmseP}{p = 0.62}
+\newcommand{\nStable}{12}
+\newcommand{\nStableYounger}{12}
+\newcommand{\nConfigs}{36}
+\newcommand{\stableDlo}{-0.99}
+\newcommand{\stableDhi}{-0.26}
+\newcommand{\icaD}{-0.70}
+\newcommand{\icaP}{p = 0.02}
+\newcommand{\repD}{-0.83}
+\newcommand{\repAUC}{0.71}
+\newcommand{\repPermP}{p = 0.003}
+\newcommand{\repHCMAE}{12.6}
+\newcommand{\repADFTDp}{p = 0.002}
+\newcommand{\repDmMAE}{8.4}
+\newcommand{\repDmR}{0.71}
+\newcommand{\cnnAUC}{0.89}
+\newcommand{\cnnAUCsd}{0.03}
+\newcommand{\cnnAcc}{82\%}
+\newcommand{\cnnAccsd}{2\%}
+\newcommand{\cnnBalAcc}{82\%}
+\newcommand{\cnnBalAccsd}{3\%}
+\newcommand{\cnnPrec}{84\%}
+\newcommand{\cnnPrecsd}{4\%}
+\newcommand{\cnnRec}{83\%}
+\newcommand{\cnnRecsd}{0\%}
+\newcommand{\cnnSpec}{80\%}
+\newcommand{\cnnSpecsd}{5\%}
+\newcommand{\cnnFone}{0.84}
+\newcommand{\cnnFonesd}{0.02}
+\newcommand{\cnnAUClo}{0.86}
+\newcommand{\cnnAUChi}{0.90}
+\newcommand{\cnnPrimAUC}{0.86}
+\newcommand{\cnnPrimAUCci}{[$0.76$, $0.94$]}
+\newcommand{\cnnPrimAcc}{80\%}
+\newcommand{\cnnPrimAccci}{[69, 89]\%}
+\newcommand{\cnnPermP}{\tbd{}}
+\newcommand{\cnnPermN}{\tbd{}}
+\newcommand{\cnnPermNull}{\tbd{}}
+\newcommand{\cnnPermNullMax}{\tbd{}}
+\newcommand{\cnnFinalEpochs}{3}
+\newcommand{\bestModel}{EEGNet (raw EEG)}
+\newcommand{\bestModelAUC}{0.88}
+\newcommand{\modelAUClo}{0.84}
+\newcommand{\modelAUChi}{0.88}
+\newcommand{\minDiffP}{0.63}
+\newcommand{\combAUC}{0.87}
+\newcommand{\combAcc}{78\%}
+\newcommand{\combCnnAUC}{0.86}
+\newcommand{\combBagAUC}{0.73}
+\newcommand{\combDiff}{0.01}
+\newcommand{\combDiffCI}{[$-0.06$, $0.08$]}
+\newcommand{\combP}{p = 0.74}
+\newcommand{\mcCNNBalAcc}{\tbd{}}
+\newcommand{\mcCNNMacroF}{\tbd{}}
+\newcommand{\mcCNNMacroAUC}{\tbd{}}
+\newcommand{\mcCNNAcc}{\tbd{}}
+\newcommand{\mcRFBalAcc}{\tbd{}}
+\newcommand{\mcRFMacroF}{\tbd{}}
+\newcommand{\mcRFMacroAUC}{\tbd{}}
+\newcommand{\mcRFAcc}{\tbd{}}
+\newcommand{\gcOOFADdelta}{\tbd{}}
+\newcommand{\gcOOFADtheta}{\tbd{}}
+\newcommand{\gcOOFADalpha}{\tbd{}}
+\newcommand{\gcOOFADbeta}{\tbd{}}
+\newcommand{\gcOOFADgamma}{\tbd{}}
+\newcommand{\gcOOFHCdelta}{\tbd{}}
+\newcommand{\gcOOFHCtheta}{\tbd{}}
+\newcommand{\gcOOFHCalpha}{\tbd{}}
+\newcommand{\gcOOFHCbeta}{\tbd{}}
+\newcommand{\gcOOFHCgamma}{\tbd{}}
+\newcommand{\gcFINALADdelta}{0.83}
+\newcommand{\gcFINALADtheta}{1.29}
+\newcommand{\gcFINALADalpha}{1.39}
+\newcommand{\gcFINALADbeta}{1.07}
+\newcommand{\gcFINALADgamma}{0.40}
+\newcommand{\gcFINALHCdelta}{0.58}
+\newcommand{\gcFINALHCtheta}{1.12}
+\newcommand{\gcFINALHCalpha}{1.37}
+\newcommand{\gcFINALHCbeta}{1.40}
+\newcommand{\gcFINALHCgamma}{1.02}
+\newcommand{\gcTopChAD}{F8, T6, T3, P4}
+\newcommand{\nDortmund}{200}
+\newcommand{\nTarget}{87}
+\newcommand{\nAD}{36}
+\newcommand{\nHC}{29}
+\newcommand{\nFTD}{22}
