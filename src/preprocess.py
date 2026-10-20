@@ -125,12 +125,31 @@ def preprocess_raw(raw: mne.io.BaseRaw) -> tuple[np.ndarray, dict]:
     return X[good].astype(np.float32), log
 
 
-def preprocess_file(path: str | Path) -> tuple[np.ndarray, dict]:
+def eyes_closed_blocks(raw: mne.io.BaseRaw, marker: str = "S210",
+                       period_s: float = 2.0) -> mne.io.BaseRaw:
+    """LEMON-style recordings alternate eyes-open/eyes-closed minutes; markers repeat every
+    `period_s` within a block. Keep only eyes-closed blocks and join them (MNE marks the
+    joins as boundaries, so filtering and epoching never cross them)."""
+    sf = raw.info["sfreq"]
+    on = np.array([a["onset"] for a in raw.annotations if a["description"].endswith(marker)])
+    if len(on) == 0:
+        raise PreprocessError(f"No eyes-closed markers ({marker}) found.")
+    on = np.sort(on)
+    breaks = np.where(np.diff(on) > 1.5 * period_s)[0]
+    starts, ends = np.r_[on[0], on[breaks + 1]], np.r_[on[breaks], on[-1]] + period_s
+    ends = np.minimum(ends, raw.times[-1])
+    pieces = [raw.copy().crop(a, b, include_tmax=False) for a, b in zip(starts, ends) if b - a > 4]
+    return mne.concatenate_raws(pieces)
+
+
+def preprocess_file(path: str | Path, select=None) -> tuple[np.ndarray, dict]:
     import warnings
     mne.set_log_level("ERROR")  # also inside joblib workers
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # 'boundary' events; counted below
         raw = load_raw(path)
+        if select is not None:
+            raw = select(raw)
     n_boundary = sum(d.lower().startswith(("boundary", "bad")) for d in raw.annotations.description)
     sf = raw.info["sfreq"]
     X, log = preprocess_raw(raw)
@@ -143,14 +162,15 @@ def cache_path(dataset: str, subject_id: str, variant: str = "raw") -> Path:
     return CACHE / config_hash() / f"{dataset}_{variant}" / f"{subject_id}.npz"
 
 
-def preprocess_cached(path: Path, dataset: str, subject_id: str, variant: str = "raw") -> dict:
+def preprocess_cached(path: Path, dataset: str, subject_id: str, variant: str = "raw",
+                      select=None) -> dict:
     out = cache_path(dataset, subject_id, variant)
     if out.exists():
         z = np.load(out, allow_pickle=True)
         return dict(z["log"].item())
     out.parent.mkdir(parents=True, exist_ok=True)
     try:
-        X, log = preprocess_file(path)
+        X, log = preprocess_file(path, select)
         np.savez_compressed(out, X=X, log=np.array(log, dtype=object))
         log["status"] = "ok"
     except Exception as e:  # keep going; record the reason

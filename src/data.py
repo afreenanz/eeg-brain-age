@@ -219,3 +219,72 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------- MPI-LEMON (external)
+LEMON = "lemon"
+LEMON_URL = "https://ftp.gwdg.de/pub/misc/MPI-Leipzig_Mind-Brain-Body-LEMON"
+LEMON_DIR = ROOT / "data" / "external" / "lemon"
+LEMON_MIN_AGE_BIN = 55   # older group only: Dortmund already covers 20-70
+
+
+def lemon_participants() -> pd.DataFrame:
+    """Healthy LEMON adults with a raw EEG folder. Age is given in 5-year bins
+    ('60-65'); we use the bin midpoint and keep the bin for reporting."""
+    import requests
+    meta = LEMON_DIR / "meta.csv"
+    if not meta.exists():
+        LEMON_DIR.mkdir(parents=True, exist_ok=True)
+        meta.write_bytes(requests.get(f"{LEMON_URL}/Behavioural_Data_MPILMBB_LEMON/"
+                                      "META_File_IDs_Age_Gender_Education_Drug_Smoke_SKID_LEMON.csv",
+                                      timeout=60).content)
+    m = pd.read_csv(meta)
+    lo = m["Age"].str.split("-").str[0].astype(float)
+    m = m.assign(subject_id=m["ID"], age_bin=m["Age"], age=lo + 2.5, dataset=LEMON, group="C")
+    return m.loc[lo >= LEMON_MIN_AGE_BIN, ["subject_id", "dataset", "group", "age", "age_bin"]] \
+        .reset_index(drop=True)
+
+
+def lemon_path(subject_id: str) -> Path:
+    return LEMON_DIR / "raw" / subject_id / f"{subject_id}.vhdr"
+
+
+def download_lemon(workers: int = 4) -> None:
+    """Raw BrainVision files (.vhdr/.vmrk/.eeg) for the older LEMON participants."""
+    from concurrent.futures import ThreadPoolExecutor
+    import time
+    import requests
+    base = f"{LEMON_URL}/EEG_MPILMBB_LEMON/EEG_Raw_BIDS_ID"
+    listing = requests.get(f"{base}/", timeout=60).text
+    subs = [s for s in lemon_participants().subject_id if f'href="{s}/"' in listing]
+    print(f"LEMON: {len(subs)} older participants with raw EEG", flush=True)
+
+    def get(sid):
+        for ext in ("vhdr", "vmrk", "eeg"):
+            dst = LEMON_DIR / "raw" / sid / f"{sid}.{ext}"
+            url = f"{base}/{sid}/RSEEG/{sid}.{ext}"
+            for attempt in range(5):
+                try:
+                    size = int(requests.head(url, timeout=60).headers.get("Content-Length", -1))
+                    if dst.exists() and dst.stat().st_size == size:
+                        break
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    with requests.get(url, stream=True, timeout=300) as r:
+                        r.raise_for_status()
+                        tmp = dst.with_suffix(dst.suffix + ".part")
+                        with open(tmp, "wb") as f:
+                            for chunk in r.iter_content(1 << 20):
+                                f.write(chunk)
+                    if tmp.stat().st_size == size:
+                        tmp.rename(dst)
+                        break
+                except requests.RequestException:
+                    time.sleep(2 ** attempt)
+            else:
+                return f"FAILED {sid}"
+        return "ok"
+
+    with ThreadPoolExecutor(workers) as ex:
+        for i, res in enumerate(ex.map(get, subs), 1):
+            if res != "ok" or i % 10 == 0 or i == len(subs):
+                print(f"  [{i}/{len(subs)}] {res}", flush=True)
