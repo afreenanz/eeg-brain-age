@@ -6,4 +6,5 @@ __pycache__/
 results/download.log
 results/streamlit.log
 notebooks/.ipynb_checkpoints/
+paper/**/build.log
 paper/build.log

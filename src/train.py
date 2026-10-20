@@ -30,6 +30,8 @@ from src.harmonize import ComBat
 SEED = 42
 RES = data.ROOT / "results"
 MODELS = data.ROOT / "models"
+# Healthy cohorts used for training (src.external adds LEMON for analysis L2).
+HEALTHY = [data.DORTMUND]
 
 # Feature sets. "robust" drops absolute power, which depends most on amplifier,
 # reference and impedance and therefore transfers worst between sites.
@@ -99,7 +101,7 @@ def load_features(name: str = "features.csv") -> pd.DataFrame:
 
 # ---------------------------------------------------------------- Dortmund CV
 def dortmund_cv(df: pd.DataFrame) -> pd.DataFrame:
-    dm = df[df.dataset == data.DORTMUND]
+    dm = df[df.dataset.isin(HEALTHY)]
     cols_all = feature_names(df)
     rows, oof = [], {}
     cv = KFold(10, shuffle=True, random_state=SEED)
@@ -124,7 +126,7 @@ def transfer(df: pd.DataFrame, fs: str, model_name: str, include_hc: bool, comba
     AD/FTD subjects: one model trained on all healthy subjects; never trained on.
     """
     cols = FEATURE_SETS[fs](feature_names(df))
-    dm = df[df.dataset == data.DORTMUND]
+    dm = df[df.dataset.isin(HEALTHY)]
     tgt = df[df.dataset == data.ADFTD]
     hc = tgt[tgt[group_col] == "C"]
     model = make_models()[model_name]
@@ -215,7 +217,7 @@ def fit_final(df: pd.DataFrame, sel: dict, preds: pd.DataFrame) -> None:
     cols = FEATURE_SETS[sel["features"]](feature_names(df))
     include_hc = sel["strategy"] in ("b_plus_hc", "d_combat_plus_hc")
     combat = sel["strategy"] in ("c_combat", "d_combat_plus_hc")
-    dm = df[df.dataset == data.DORTMUND]
+    dm = df[df.dataset.isin(HEALTHY)]
     hc = df[(df.dataset == data.ADFTD) & (df.group == "C")]
     train = pd.concat([dm, hc]) if include_hc else dm
     X = train[cols].values
@@ -259,7 +261,7 @@ def main() -> None:
     print(tr.round(2).to_string(index=False))
     sel = select(cv, tr)
     print("\nSelected:", sel)
-    dm = df[df.dataset == data.DORTMUND]
+    dm = df[df.dataset.isin(HEALTHY)]
     pd.DataFrame({"subject_id": dm.subject_id, "age": dm.age,
                   "pred": oof[(sel["features"], sel["model"])]}).to_csv(
         RES / "dortmund_oof.csv", index=False)

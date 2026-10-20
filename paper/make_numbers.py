@@ -131,9 +131,24 @@ bci = get(st, "bootstrap_CI95") or {}
 m("cnnPrimAUC", f(get(bci, "AUC", "value"))); m("cnnPrimAUCci", ci(get(bci, "AUC", "CI95")))
 m("cnnPrimAcc", pct(get(bci, "accuracy", "value")))
 m("cnnPrimAccci", TBD if not bci else f"[{100*bci['accuracy']['CI95'][0]:.0f}, {100*bci['accuracy']['CI95'][1]:.0f}]\\%")
-pt = get(st, "permutation_test") or {}
+pt = {}
+nullf = CLS / "cnn_permutation_null.csv"
+if nullf.exists() and bci:
+    null = pd.read_csv(nullf).AUC.values
+    real = bci["AUC"]["value"]
+    pt = {"p_value": (1 + (null >= real).sum()) / (1 + len(null)), "n_permutations": len(null),
+          "null_mean": null.mean(), "null_max": null.max()}
 m("cnnPermP", pval(pt.get("p_value"))); m("cnnPermN", str(pt.get("n_permutations", TBD)))
 m("cnnPermNull", f(pt.get("null_mean"))); m("cnnPermNullMax", f(pt.get("null_max")))
+if c:
+    rows = [f"{r['seed']} & {r['AUC']:.2f} & {100*r['accuracy']:.0f} & {100*r['precision_AD']:.0f} & "
+            f"{100*r['recall_AD']:.0f} & {100*r['specificity']:.0f} & {r['F1']:.2f} \\\\" for r in c["runs"]]
+    mn, sd_ = c["across_seeds_mean"], c["across_seeds_sd"]
+    rows.append("\\midrule Mean $\\pm$ SD & " + " & ".join(
+        (f"{mn[k]:.2f} $\\pm$ {sd_[k]:.2f}" if k in ("AUC", "F1") else f"{100*mn[k]:.0f} $\\pm$ {100*sd_[k]:.0f}")
+        for k in ("AUC", "accuracy", "precision_AD", "recall_AD", "specificity", "F1")) + " \\\\")
+    GEN.mkdir(parents=True, exist_ok=True)
+    (GEN / "table_cnn_seeds.tex").write_text("\n".join(rows))
 cfg = load(ROOT / "models" / "cnn_config.json")
 m("cnnFinalEpochs", str(get(cfg, "epochs") or TBD))
 
@@ -226,10 +241,44 @@ m("repNsel", str(len(rsel_)) if rsel_ is not None else TBD)
 m("repNok", str(int(((rlog.dataset == "ds005385") & (rlog.status == "ok")).sum())) if rlog is not None else TBD)
 m("nAD", str(b.get("n_AD", TBD))); m("nHC", str(b.get("n_HC", TBD))); m("nFTD", str(b.get("n_FTD", TBD)))
 
+import sys
+sys.path.insert(0, str(ROOT))
+from src import data as D  # noqa: E402
+part = D.adftd_participants()
+ok_ids = set(ep[(ep.status == "ok") & (ep.dataset == "ds004504") & (ep.variant == "raw")].subject_id) if ep is not None else set()
+rows = []
+for g, name in [("A", "ds004504 AD"), ("C", "ds004504 HC"), ("F", "ds004504 FTD")]:
+    q = part[(part.group == g) & part.subject_id.isin(ok_ids)]
+    rows.append(f"{name} & {len(q)} & {q.age.mean():.1f} $\\pm$ {q.age.std():.1f} ({q.age.min()}--{q.age.max()}) & "
+                f"{(q.sex == 'F').sum()}/{len(q)} & {q.mmse.mean():.1f} $\\pm$ {q.mmse.std():.1f} \\\\")
+dsel = pd.read_csv(D.RAW / D.DORTMUND / "selected_subjects.csv")
+dok = set(ep[(ep.status == "ok") & (ep.dataset == "ds005385")].subject_id) if ep is not None else set()
+q = dsel[dsel.subject_id.isin(dok)]
+rows.append(f"Dortmund (healthy) & {len(q)} & {q.age.mean():.1f} $\\pm$ {q.age.std():.1f} ({q.age.min()}--{q.age.max()}) & "
+            f"{(q.sex == 'F').sum()}/{len(q)} & -- \\\\")
+lem_f = load(RES / "external" / "features_lemon.csv")
+if lem_f is not None:
+    rows.append(f"LEMON (healthy, external) & {len(lem_f)} & bins 55--80 & -- & -- \\\\")
 GEN.mkdir(parents=True, exist_ok=True)
+(GEN / "table_cohorts.tex").write_text("\n".join(rows))
+
+lr_ = load(RES / "external" / "lemon_results.json")
+l1 = get(lr_, "L1_unchanged_model_on_LEMON") or {}
+l2 = get(lr_, "L2_retrained_with_LEMON") or {}
+m("lemN", str(l1.get("LEMON_n", TBD))); m("lemMAE", f(l1.get("LEMON_MAE"), 1)); m("lemR", f(l1.get("LEMON_r")))
+for k, n in [("LEMON HC", "Lem"), ("ds004504 HC", "Hc"), ("ds004504 AD", "Ad")]:
+    m(f"rawGap{n}", f(get(l1, "mean_raw_gap", k), 1)); m(f"rawGap{n}sd", f(get(l1, "sd_raw_gap", k), 1))
+m("lemADd", f(get(l1, "ds004504 AD vs LEMON HC", "d"))); m("lemADp", pval(get(l1, "ds004504 AD vs LEMON HC", "mwu_p")))
+m("lemHCd", f(get(l1, "ds004504 HC vs LEMON HC", "d"))); m("lemHCp", pval(get(l1, "ds004504 HC vs LEMON HC", "mwu_p")))
+m("ltwoN", str(l2.get("n_healthy_train", TBD))); m("ltwoMAE", f(l2.get("healthy_cv_MAE"), 1))
+m("ltwoD", f(get(l2, "bag", "cohen_d_AD_vs_HC"))); m("ltwoP", pval(get(l2, "bag", "mwu_p")))
+m("ltwoAUC", f(l2.get("logistic_AUC"))); m("ltwoHCMAE", f(get(l2, "bag", "HC_MAE_raw"), 1))
+m("ltwoStable", str(l2.get("n_stable_configs", TBD))); m("ltwoStableYounger", str(l2.get("n_stable_configs_AD_younger", TBD)))
+m("ltwoFTDd", f(get(l2, "bag", "cohen_d_FTD_vs_HC")))
+
 # Every table file always exists; a red TBD row until its results are computed.
 for name, ncol in [("table_directions", 4), ("table_baselines", 7), ("table_ablation", 4),
-                   ("table_confusion3", 4)]:
+                   ("table_confusion3", 4), ("table_cnn_seeds", 7), ("table_cohorts", 5)]:
     t = GEN / f"{name}.tex"
     if not t.exists():
         t.write_text(f"\\multicolumn{{{ncol}}}{{c}}{{{TBD}}} \\\\")
