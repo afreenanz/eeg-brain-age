@@ -41,3 +41,5 @@ all, it is only a clearly labelled supplementary CNN test.
 ## Note added after download (before analysis)
 
 sub-010235 and sub-010281 are listed with an RSEEG folder on the LEMON server, but the folder is empty (HTTP 404 for all files). The available older sample is therefore 71 participants.
+
+sub-010219 and sub-010044: the published .vhdr/.vmrk headers reference data files under a different name (lemon_037.eeg, sub-010044eeg.eeg). The headers were corrected to point to the published .eeg/.vmrk files (originals kept as *.orig). sub-010285 has no eyes-closed (S210) markers and is excluded.

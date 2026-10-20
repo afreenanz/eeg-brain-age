@@ -254,17 +254,19 @@ for g, name in [("A", "ds004504 AD"), ("C", "ds004504 HC"), ("F", "ds004504 FTD"
 dsel = pd.read_csv(D.RAW / D.DORTMUND / "selected_subjects.csv")
 dok = set(ep[(ep.status == "ok") & (ep.dataset == "ds005385")].subject_id) if ep is not None else set()
 q = dsel[dsel.subject_id.isin(dok)]
-rows.append(f"Dortmund (healthy) & {len(q)} & {q.age.mean():.1f} $\\pm$ {q.age.std():.1f} ({q.age.min()}--{q.age.max()}) & "
+rows.append(f"Dortmund (HC) & {len(q)} & {q.age.mean():.1f} $\\pm$ {q.age.std():.1f} ({q.age.min()}--{q.age.max()}) & "
             f"{(q.sex == 'F').sum()}/{len(q)} & -- \\\\")
 lem_f = load(RES / "external" / "features_lemon.csv")
 if lem_f is not None:
-    rows.append(f"LEMON (healthy, external) & {len(lem_f)} & bins 55--80 & -- & -- \\\\")
+    rows.append(f"LEMON (ext. HC) & {len(lem_f)} & 55--80 (5-y bins) & -- & -- \\\\")
 GEN.mkdir(parents=True, exist_ok=True)
 (GEN / "table_cohorts.tex").write_text("\n".join(rows))
 
 lr_ = load(RES / "external" / "lemon_results.json")
 l1 = get(lr_, "L1_unchanged_model_on_LEMON") or {}
 l2 = get(lr_, "L2_retrained_with_LEMON") or {}
+llog = load(RES / "external" / "lemon_epochs_log.csv")
+m("lemNavail", str(len(llog)) if llog is not None else TBD)
 m("lemN", str(l1.get("LEMON_n", TBD))); m("lemMAE", f(l1.get("LEMON_MAE"), 1)); m("lemR", f(l1.get("LEMON_r")))
 for k, n in [("LEMON HC", "Lem"), ("ds004504 HC", "Hc"), ("ds004504 AD", "Ad")]:
     m(f"rawGap{n}", f(get(l1, "mean_raw_gap", k), 1)); m(f"rawGap{n}sd", f(get(l1, "sd_raw_gap", k), 1))

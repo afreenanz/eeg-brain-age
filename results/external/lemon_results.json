@@ -1,0 +1,57 @@
+{
+  "L1_unchanged_model_on_LEMON": {
+    "LEMON_n": 70,
+    "LEMON_MAE": 10.674943097565489,
+    "LEMON_r": -0.025810726627523015,
+    "mean_raw_gap": {
+      "LEMON HC": -7.76211449015734,
+      "ds004504 HC": -5.014171982144176,
+      "ds004504 AD": -14.677017567780204,
+      "ds004504 FTD": -6.563680122723991
+    },
+    "sd_raw_gap": {
+      "LEMON HC": 11.477437263256212,
+      "ds004504 HC": 7.679311181338271,
+      "ds004504 AD": 12.933650157779116,
+      "ds004504 FTD": 16.221679991915018
+    },
+    "ds004504 AD vs LEMON HC": {
+      "d": -0.5768536563805913,
+      "mwu_p": 0.006691724480597758
+    },
+    "ds004504 HC vs LEMON HC": {
+      "d": 0.2611424281661444,
+      "mwu_p": 0.17722944898471416
+    },
+    "ds004504 AD vs ds004504 HC": {
+      "d": -0.8852611780093557,
+      "mwu_p": 0.0011960824200334828
+    }
+  },
+  "L2_retrained_with_LEMON": {
+    "selection": {
+      "features": "all",
+      "model": "ridge",
+      "strategy": "b_plus_hc",
+      "rule": "features+model: lowest Dortmund 10-fold MAE; strategy: lowest out-of-fold MAE on ds004504 HC. AD labels not used."
+    },
+    "healthy_cv_MAE": 9.08530241076481,
+    "healthy_cv_r": 0.6489046790990043,
+    "n_healthy_train": 270,
+    "bag": {
+      "HC_MAE_raw": 8.11546123317878,
+      "HC_r": 0.3186147594628519,
+      "BAG_HC_mean": -2.4562727331017256e-14,
+      "BAG_AD_mean": -11.632530084646405,
+      "BAG_AD_sd": 21.491027577876903,
+      "BAG_FTD_mean": -2.232393382488263,
+      "cohen_d_AD_vs_HC": -0.6036656118729828,
+      "mwu_p": 0.013847241604215865,
+      "cohen_d_FTD_vs_HC": -0.11060679176603665,
+      "mwu_p_FTD_vs_HC": 0.8120885462174962
+    },
+    "logistic_AUC": 0.6302681992337165,
+    "n_stable_configs_AD_younger": 6,
+    "n_stable_configs": 6
+  }
+}

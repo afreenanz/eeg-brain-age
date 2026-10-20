@@ -239,6 +239,10 @@ These are descriptive, from the final model trained on all 65 subjects.
 that never saw them); uploaded files use the final model. Not yet done from the Phase 1
 plan: GAN augmentation (optional; risky with 65 subjects) and FTD as a third class.
 
+### External validation: MPI-LEMON (`src/external.py`, plan in `results/external/ANALYSIS_PLAN.md`)
+
+70 healthy older adults (55-80 y) from a third site, eyes-closed blocks only. **L1** (unchanged main model): raw gap -7.8 y in LEMON HC vs -5.0 in ds004504 HC (d = 0.26, p = 0.18) and -14.7 in AD (AD vs LEMON HC d = -0.58, p = 0.007). Healthy older adults from an independent lab do not show the AD gap. Within LEMON, predicted age does not track age (r = -0.03). **L2** (retrained on 270 healthy adults, 20-80 y): AD vs HC d = -0.60 (p = 0.014), negative in 6/6 stable configurations.
+
 ## Paper experiments (`src/baselines.py`, `src/ablation.py`, `src/gradcam_cv.py`, `src/cnn_multiclass.py`, `src/stats_cnn.py`)
 
 **Baselines on identical folds (AD vs HC, seed 42):** Spectral features + logistic regression AUC 0.84; Spectral features + RBF-SVM AUC 0.85; Spectral features + random forest AUC 0.86; EEGNet (raw EEG) AUC 0.88; CWT-scalogram CNN AUC 0.86. No difference from the CNN is significant (paired bootstrap, all p > 0.6).
