@@ -1,0 +1,62 @@
+[
+  {
+    "('ablation', '')":"full",
+    "('description', '')":"19 ch, 1-40 Hz, 64 time bins, <=150 epochs (main model)",
+    "('AUC', 'mean')":0.888,
+    "('AUC', 'std')":0.026,
+    "('accuracy', 'mean')":0.821,
+    "('accuracy', 'std')":0.024,
+    "('F1', 'mean')":0.837,
+    "('F1', 'std')":0.018
+  },
+  {
+    "('ablation', '')":"slow_only",
+    "('description', '')":"only 1-8 Hz rows (delta+theta)",
+    "('AUC', 'mean')":0.847,
+    "('AUC', 'std')":0.006,
+    "('accuracy', 'mean')":0.774,
+    "('accuracy', 'std')":0.044,
+    "('F1', 'mean')":0.793,
+    "('F1', 'std')":0.037
+  },
+  {
+    "('ablation', '')":"fast_only",
+    "('description', '')":"only 8-40 Hz rows (alpha+beta+gamma)",
+    "('AUC', 'mean')":0.872,
+    "('AUC', 'std')":0.019,
+    "('accuracy', 'mean')":0.79,
+    "('accuracy', 'std')":0.018,
+    "('F1', 'mean')":0.81,
+    "('F1', 'std')":0.029
+  },
+  {
+    "('ablation', '')":"no_time",
+    "('description', '')":"time axis averaged to 4 bins (spectrum only)",
+    "('AUC', 'mean')":0.842,
+    "('AUC', 'std')":0.037,
+    "('accuracy', 'mean')":0.795,
+    "('accuracy', 'std')":0.047,
+    "('F1', 'mean')":0.812,
+    "('F1', 'std')":0.048
+  },
+  {
+    "('ablation', '')":"8_channels",
+    "('description', '')":"8-channel montage (Fp1 Fp2 C3 C4 T3 T4 O1 O2)",
+    "('AUC', 'mean')":0.849,
+    "('AUC', 'std')":0.017,
+    "('accuracy', 'mean')":0.795,
+    "('accuracy', 'std')":0.032,
+    "('F1', 'mean')":0.813,
+    "('F1', 'std')":0.039
+  },
+  {
+    "('ablation', '')":"60_epochs",
+    "('description', '')":"60 of the 150 epochs per subject (40% of the data)",
+    "('AUC', 'mean')":0.876,
+    "('AUC', 'std')":0.032,
+    "('accuracy', 'mean')":0.785,
+    "('accuracy', 'std')":0.015,
+    "('F1', 'mean')":0.802,
+    "('F1', 'std')":0.012
+  }
+]

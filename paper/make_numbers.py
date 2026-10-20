@@ -110,7 +110,7 @@ else:
 # feature directions table
 fd = get(s, "feature_directions")
 if fd:
-    rows = [f"{d['feature']} & {d['age_r_healthy']:+.2f} & {d['AD_vs_HC_d']:+.2f} & {d['AD_looks']} \\\\"
+    rows = [f"{d['feature']} & ${d['age_r_healthy']:+.2f}$ & ${d['AD_vs_HC_d']:+.2f}$ & {d['AD_looks']} \\\\"
             for d in fd]
     GEN.mkdir(parents=True, exist_ok=True)
     (GEN / "table_directions.tex").write_text("\n".join(rows))
@@ -149,7 +149,8 @@ if bl:
         if r is None:
             continue
         vs = bl["cnn_minus_baseline_AUC"].get(k)
-        cmp_ = "--" if vs is None else f"{vs['diff']:+.2f} ({pval(vs['p_two_sided'])})"
+        dd = None if vs is None else (0.0 if abs(vs["diff"]) < 0.005 else vs["diff"])
+        cmp_ = "--" if vs is None else f"${dd:+.2f}$ ({pval(vs['p_two_sided'])})"
         rows.append(f"{names[k]} & {r['AUC']:.2f} & {100*r['accuracy']:.0f} & "
                     f"{100*r['recall_AD']:.0f} & {100*r['specificity']:.0f} & {r['F1']:.2f} & {cmp_} \\\\")
     (GEN / "table_baselines.tex").write_text("\n".join(rows))
@@ -173,10 +174,19 @@ ab = load(CLS / "ablation.csv")
 if ab is not None and len(ab):
     g = ab.groupby(["ablation", "description"], sort=False)
     rows = []
+    short = {"full": "Full model (19 ch, 1--40\\,Hz, time)", "slow_only": "Only 1--8\\,Hz",
+             "fast_only": "Only 8--40\\,Hz", "no_time": "No time axis (spectrum)",
+             "8_channels": "8 channels", "60_epochs": "40\\% of epochs"}
     for (a, desc), d in g:
+        desc = short.get(a, desc)
         rows.append(f"{desc} & {d.AUC.mean():.2f} $\\pm$ {d.AUC.std():.2f} & "
                     f"{100*d.accuracy.mean():.0f} $\\pm$ {100*d.accuracy.std():.0f} & {len(d)} \\\\")
     (GEN / "table_ablation.tex").write_text("\n".join(rows))
+    a = ab.groupby("ablation").AUC.mean()
+    for k, n in [("full", "Full"), ("slow_only", "Slow"), ("fast_only", "Fast"),
+                 ("no_time", "NoTime"), ("8_channels", "Eight"), ("60_epochs", "Sixty")]:
+        m(f"abl{n}", f(a.get(k)))
+    m("ablMaxDrop", f(a.get("full") - a.drop("full").min()))
 
 # multiclass
 mc = load(CLS / "multiclass_metrics.json")
@@ -186,7 +196,10 @@ for mdl in ("cnn", "rf"):
         v = get(mc, "mean_over_seeds", mdl, k)
         m(f"mc{mdl.upper()}{n}", pct(v) if "Acc" in n else f(v))
 if mc:
+    rec = mc["runs"][0]["cnn"]["recall_per_class"]
+    m("mcRecHC", pct(rec["HC"])); m("mcRecAD", pct(rec["AD"])); m("mcRecFTD", pct(rec["FTD"]))
     conf = mc["runs"][0]["cnn"]["confusion_rows_true_HC_AD_FTD"]
+    m("mcFTDasAD", str(conf[2][1])); m("mcNFTD", str(sum(conf[2])))
     rows = [f"{lab} & " + " & ".join(str(x) for x in row) + r" \\" for lab, row in zip(["HC", "AD", "FTD"], conf)]
     (GEN / "table_confusion3.tex").write_text("\n".join(rows))
 

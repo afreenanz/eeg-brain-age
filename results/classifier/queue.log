@@ -1,1 +1,71 @@
 === baselines finished Mon Oct 19 19:20:26 IST 2026
+  full       seed  42: AUC 0.858 acc 0.800
+  full       seed   7: AUC 0.901 acc 0.846
+  full       seed 123: AUC 0.904 acc 0.815
+  slow_only  seed  42: AUC 0.852 acc 0.800
+  slow_only  seed   7: AUC 0.847 acc 0.800
+  slow_only  seed 123: AUC 0.841 acc 0.723
+  fast_only  seed  42: AUC 0.859 acc 0.769
+  fast_only  seed   7: AUC 0.894 acc 0.800
+  fast_only  seed 123: AUC 0.863 acc 0.800
+  no_time    seed  42: AUC 0.819 acc 0.785
+  no_time    seed   7: AUC 0.822 acc 0.754
+  no_time    seed 123: AUC 0.885 acc 0.846
+  8_channels seed  42: AUC 0.830 acc 0.785
+  8_channels seed   7: AUC 0.853 acc 0.831
+  8_channels seed 123: AUC 0.863 acc 0.769
+  60_epochs  seed  42: AUC 0.841 acc 0.785
+  60_epochs  seed   7: AUC 0.904 acc 0.769
+  60_epochs  seed 123: AUC 0.882 acc 0.800
+                                                                      AUC        accuracy            F1       
+                                                                     mean    std     mean    std   mean    std
+ablation   description                                                                                        
+full       19 ch, 1-40 Hz, 64 time bins, <=150 epochs (main model)  0.888  0.026    0.821  0.024  0.837  0.018
+slow_only  only 1-8 Hz rows (delta+theta)                           0.847  0.006    0.774  0.044  0.793  0.037
+fast_only  only 8-40 Hz rows (alpha+beta+gamma)                     0.872  0.019    0.790  0.018  0.810  0.029
+no_time    time axis averaged to 4 bins (spectrum only)             0.842  0.037    0.795  0.047  0.812  0.048
+8_channels 8-channel montage (Fp1 Fp2 C3 C4 T3 T4 O1 O2)            0.849  0.017    0.795  0.032  0.813  0.039
+60_epochs  60 of the 150 epochs per subject (40% of the data)       0.876  0.032    0.785  0.015  0.802  0.012
+=== ablation finished Mon Oct 19 19:55:50 IST 2026
+{
+  "correct AD": {
+    "n_subjects": 30,
+    "band_importance_vs_average": {
+      "delta": 0.8054308731687897,
+      "theta": 1.2864098558208839,
+      "alpha": 1.269192556224236,
+      "beta": 1.0911123489839267,
+      "gamma": 0.6424034456262833
+    }
+  },
+  "correct HC": {
+    "n_subjects": 22,
+    "band_importance_vs_average": {
+      "delta": 0.6456587350206509,
+      "theta": 0.9623255849090339,
+      "alpha": 1.3488866169049007,
+      "beta": 1.4680019248714016,
+      "gamma": 0.9353761949815952
+    }
+  }
+}
+=== gradcam_cv finished Mon Oct 19 19:59:07 IST 2026
+seed 42: CNN bal.acc 0.636 macroAUC 0.775 | RF bal.acc 0.575 macroAUC 0.730
+seed 7: CNN bal.acc 0.621 macroAUC 0.770 | RF bal.acc 0.514 macroAUC 0.722
+seed 123: CNN bal.acc 0.640 macroAUC 0.785 | RF bal.acc 0.583 macroAUC 0.710
+{
+  "cnn": {
+    "accuracy": 0.6475095785440613,
+    "balanced_accuracy": 0.6324064398777042,
+    "macro_F1": 0.6296772874272483,
+    "macro_AUC_ovr": 0.7767056637849268
+  },
+  "rf": {
+    "accuracy": 0.5900383141762452,
+    "balanced_accuracy": 0.5575970432292271,
+    "macro_F1": 0.5480386436123331,
+    "macro_AUC_ovr": 0.7205288025918617
+  }
+}
+CNN confusion (seed 42, rows = true HC/AD/FTD): [[22, 3, 4], [6, 25, 5], [2, 10, 10]]
+=== multiclass finished Mon Oct 19 20:13:10 IST 2026

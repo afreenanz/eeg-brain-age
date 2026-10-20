@@ -65,9 +65,10 @@ On the healthy cohort, the selected model (ridge, all features, strategy~(b)) re
 \centering
 \caption{Healthy-aging direction vs. AD effect per feature family}
 \label{tab:dir}
+\footnotesize\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lccc}
 \toprule
-Feature & $r$ with age (healthy) & $d$ (AD$-$HC) & AD looks \\
+Feature & $r$ (age, healthy) & $d$ (AD$-$HC) & AD looks \\
 \midrule
 \tableinput{generated/table_directions.tex}
 \bottomrule
@@ -96,15 +97,31 @@ Model & AUC & Acc. (\%) & Recall (\%) & Spec. (\%) & F1 & $\Delta$AUC (CNN$-$mod
 Stacking the CNN with BAG gave AUC \combAUC{} versus \combCnnAUC{} for the CNN alone ($\Delta=\combDiff{}$, 95\% CI \combDiffCI{}, \combP{}). Both models draw on the same EEG slowing, so BAG adds interpretability rather than accuracy.
 
 \subsection{Ablations and three-class classification}
-Table~\ref{tab:abl} varies one design choice at a time (three seeds each). In the three-class task (HC/AD/FTD) the CNN reached balanced accuracy \mcCNNBalAcc{} (macro AUC \mcCNNMacroAUC{}), versus \mcRFBalAcc{} (\mcRFMacroAUC{}) for the random forest.
+Table~\ref{tab:abl} varies one design choice at a time (three seeds each). No single change reduced the mean AUC by more than \ablMaxDrop{}, a margin comparable to the variation between seeds. Using only 8--40\,Hz (AUC \ablFast{}) retained more information than using only 1--8\,Hz (\ablSlow{}). Collapsing the time axis (\ablNoTime{}) gave a small drop. Eight channels (\ablEight{}) and 40\% of the epochs (\ablSixty{}) remained close to the full model (\ablFull{}), suggesting that shorter recordings and low-density montages are viable.
+
+In the three-class task (HC/AD/FTD) the CNN reached balanced accuracy \mcCNNBalAcc{} (macro AUC \mcCNNMacroAUC{}) versus \mcRFBalAcc{} (\mcRFMacroAUC{}) for the random forest (Table~\ref{tab:conf3}). FTD was hardest (recall \mcRecFTD{}): \mcFTDasAD{} of \mcNFTD{} FTD subjects were classified as AD, consistent with the overlapping EEG slowing of the two dementias.
+
+\begin{table}[t]
+\centering
+\caption{Three-class CNN confusion matrix (primary seed; rows: true class)}
+\label{tab:conf3}
+\begin{tabular}{lccc}
+\toprule
+True $\backslash$ predicted & HC & AD & FTD \\
+\midrule
+\tableinput{generated/table_confusion3.tex}
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table}[t]
 \centering
 \caption{CNN ablations (mean $\pm$ SD over seeds)}
 \label{tab:abl}
-\begin{tabular}{p{3.6cm}ccc}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
 \toprule
-Variant & AUC & Acc. (\%) & runs \\
+Variant & AUC & Acc. (\%) & seeds \\
 \midrule
 \tableinput{generated/table_ablation.tex}
 \bottomrule
@@ -112,7 +129,7 @@ Variant & AUC & Acc. (\%) & runs \\
 \end{table}
 
 \subsection{Explainability}
-Relative to the average across frequencies (1.0), final-model Grad-CAM importance for AD decisions was theta \gcFINALADtheta{}, alpha \gcFINALADalpha{}, delta \gcFINALADdelta{} and beta \gcFINALADbeta{}. For HC decisions it was alpha \gcFINALHCalpha{} and beta \gcFINALHCbeta{} (Fig.~\ref{fig:gradcam}). Out-of-fold Grad-CAM gave AD theta \gcOOFADtheta{} and alpha \gcOOFADalpha{}, and HC beta \gcOOFHCbeta{}. The most important channels for AD were temporo-parietal (\gcTopChAD{}).
+Relative to the average across frequencies (1.0), final-model Grad-CAM importance for AD decisions was theta \gcFINALADtheta{}, alpha \gcFINALADalpha{}, delta \gcFINALADdelta{} and beta \gcFINALADbeta{}. For HC decisions it was alpha \gcFINALHCalpha{} and beta \gcFINALHCbeta{} (Fig.~\ref{fig:gradcam}). Out-of-fold Grad-CAM, from fold models that never saw the explained subject, reproduced this pattern: AD theta \gcOOFADtheta{} and alpha \gcOOFADalpha{} (delta \gcOOFADdelta{}), and HC alpha \gcOOFHCalpha{} and beta \gcOOFHCbeta{}. The most important channels for AD were temporo-parietal (\gcTopChAD{}).
 
 \begin{figure*}[t]
 \centering

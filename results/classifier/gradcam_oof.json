@@ -1,0 +1,22 @@
+{
+  "correct AD": {
+    "n_subjects": 30,
+    "band_importance_vs_average": {
+      "delta": 0.8054308731687897,
+      "theta": 1.2864098558208839,
+      "alpha": 1.269192556224236,
+      "beta": 1.0911123489839267,
+      "gamma": 0.6424034456262833
+    }
+  },
+  "correct HC": {
+    "n_subjects": 22,
+    "band_importance_vs_average": {
+      "delta": 0.6456587350206509,
+      "theta": 0.9623255849090339,
+      "alpha": 1.3488866169049007,
+      "beta": 1.4680019248714016,
+      "gamma": 0.9353761949815952
+    }
+  }
+}
