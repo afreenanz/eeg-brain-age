@@ -37,3 +37,7 @@ fitted on that cohort's healthy controls only, out-of-fold, as done for ds004504
 Recordings are ~1024 samples per channel and no ages were found. This is too short for the
 30 s minimum and unusable for brain age. It is excluded from the main analyses. If used at
 all, it is only a clearly labelled supplementary CNN test.
+
+## Note added after download (before analysis)
+
+sub-010235 and sub-010281 are listed with an RSEEG folder on the LEMON server, but the folder is empty (HTTP 404 for all files). The available older sample is therefore 71 participants.
