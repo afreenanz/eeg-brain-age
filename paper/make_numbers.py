@@ -220,6 +220,10 @@ if ep is not None:
     ok = ep[ep.status == "ok"]
     m("nDortmund", str(int(((ok.dataset == "ds005385") & (ok.variant == "raw")).sum())))
     m("nTarget", str(int(((ok.dataset == "ds004504") & (ok.variant == "raw")).sum())))
+rsel_ = load(RES / "replication_n513" / "selected_subjects.csv")
+rlog = load(RES / "replication_n513" / "epochs_log.csv")
+m("repNsel", str(len(rsel_)) if rsel_ is not None else TBD)
+m("repNok", str(int(((rlog.dataset == "ds005385") & (rlog.status == "ok")).sum())) if rlog is not None else TBD)
 m("nAD", str(b.get("n_AD", TBD))); m("nHC", str(b.get("n_HC", TBD))); m("nFTD", str(b.get("n_FTD", TBD)))
 
 GEN.mkdir(parents=True, exist_ok=True)

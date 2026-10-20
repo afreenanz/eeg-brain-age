@@ -1,0 +1,154 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx,booktabs,xcolor,amsmath,url,cite,multirow}
+\graphicspath{{../results/figures/}}
+\input{generated/numbers.tex}
+\makeatletter\newcommand{\tableinput}[1]{\@@input #1 }\makeatother
+
+\begin{document}
+
+\title{When Alzheimer's EEG Does Not Look Old: Brain-Age Gap and CWT-Scalogram CNNs for Interpretable Alzheimer's Disease Detection}
+
+\author{\IEEEauthorblockN{Aayush Soni, Aamal Moshin Magdum, Afreen Anz, Aparna Sankar, and Manasa}
+\IEEEauthorblockA{Department of Computer Science and Engineering\\
+B.\,M.\,S. College of Engineering, Bengaluru, India}}
+
+\maketitle
+
+\begin{abstract}
+Resting-state electroencephalography (EEG) is a low-cost candidate for Alzheimer's disease (AD) screening. We studied two complementary approaches on public data with strictly subject-independent evaluation. First, an EEG brain-age model was trained on \dmN{} healthy adults aged 20--70 years (Dortmund Vital Study) and transferred to a clinical cohort of \nAD{} AD patients, \nHC{} healthy controls (HC) and \nFTD{} frontotemporal dementia (FTD) patients (OpenNeuro ds004504). AD was never used in training. Contrary to the accelerated-aging hypothesis, the bias-corrected brain-age gap (BAG) was strongly \emph{negative} in AD ($\bagAD{}\pm\bagADsd{}$ vs. $\bagHC{}\pm\bagHCsd{}$ years in HC; Cohen's $d=\bagD{}$, 95\% CI \bagDci{}). This held across every numerically stable model configuration, on ICA-cleaned data, and in a replication with 513 training subjects. It was specific to AD (FTD vs. HC: $d=\ftdHCd{}$). Feature-level analysis explains the reversal. Slow-wave power falls and beta power rises with healthy aging, whereas AD shows the opposite, so AD EEG departs from the healthy-aging trajectory instead of advancing along it. Second, a compact convolutional neural network (CNN) on continuous-wavelet-transform scalograms classified AD vs. HC with AUC \cnnAUC{} (accuracy \cnnAcc{}, mean of three seeds). This was comparable to spectral-feature baselines and EEGNet (no significant differences), and adding the BAG did not significantly improve it ($\Delta$AUC $=\combDiff{}$, \combP{}). Grad-CAM attributed AD decisions mainly to theta and alpha activity. We argue that EEG brain age in AD should be read as a deviation from normative aging, not as accelerated aging.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Alzheimer's disease, EEG, brain age, continuous wavelet transform, convolutional neural network, Grad-CAM, explainable AI
+\end{IEEEkeywords}
+
+\section{Introduction}
+Alzheimer's disease is the most common cause of dementia, and early, accessible screening remains an unmet need. Resting-state EEG is inexpensive, non-invasive and widely available. AD is associated with EEG ``slowing'': more delta and theta activity and less alpha and beta power~\cite{jeong2004,babiloni2020}. Two families of methods exploit this. Discriminative classifiers, from spectral features with classical machine learning to deep networks on time--frequency images, are trained directly on patients versus controls. \emph{Brain-age} models are trained only on healthy people to predict chronological age. The brain-age gap (BAG, predicted minus chronological age) is then interpreted as a marker of accelerated aging~\cite{cole2017,franke2019}. EEG brain age has been estimated from resting-state and sleep EEG~\cite{alzoubi2018,engemann2022}, and sleep-EEG brain age was elevated in dementia~\cite{sun2019}.
+
+We asked three questions using only public data and subject-independent evaluation. (i) Does a resting-state EEG brain-age model trained on healthy adults show an elevated BAG in AD? (ii) How does a CWT-scalogram CNN compare with strong but simple baselines? (iii) Does the BAG add information to the classifier? Our main finding is negative for the accelerated-aging view: AD EEG appears ``younger'', because AD and healthy aging move several spectral features in opposite directions. We release all code and results.
+
+\section{Materials and Methods}
+\subsection{Data}
+\emph{Target cohort.} OpenNeuro ds004504~\cite{miltiadous2023}: resting-state eyes-closed EEG from \nAD{} AD, \nHC{} HC and \nFTD{} FTD subjects. It was recorded with 19 electrodes (10--20 system) at 500\,Hz. One FTD recording failed artifact screening. The main analyses use the raw recordings. The authors' ICA-cleaned derivatives were used only for a sensitivity analysis, so that training data, test data and deployment share one pipeline. The dataset contains no mild-cognitive-impairment subjects.
+
+\emph{Healthy aging cohort.} OpenNeuro ds005385, the Dortmund Vital Study~\cite{gajewski2022}: 64-channel EEG at 1000\,Hz from healthy adults aged 20--70. We used the baseline session, eyes-closed, pre-task recording. We excluded recordings flagged as possibly discontinuous and drew an age-stratified sample weighted toward older ages (25/25/35/50/65 per decade, $n=\dmN{}$).
+
+\subsection{Harmonized preprocessing}
+One function processed both cohorts and the deployed application, using MNE-Python~\cite{mne}. The steps were: the same 19 channels in a fixed order (10--10 names mapped to 10--20); average reference over these channels; a 0.5--45\,Hz zero-phase FIR band-pass; resampling to 250\,Hz; and 4\,s epochs with 2\,s overlap. Epochs were rejected when their peak-to-peak amplitude exceeded 150\,$\mu$V or fell below 1\,$\mu$V. No ICA was applied.
+
+\subsection{Brain-age model}
+From the Welch power spectrum (4\,s Hann window, averaged over epochs) we computed, per channel: log absolute and relative power in the delta (1--4\,Hz), theta (4--8), alpha (8--13) and beta (13--30\,Hz) bands; alpha peak frequency; log theta/alpha ratio; and aperiodic exponent and offset (FOOOF~\cite{fooof}). This gives 228 features. Ridge regression (inner-CV regularization), a sign-constrained ridge and gradient boosting were compared over three feature sets with 10-fold CV on the healthy cohort. Four transfer strategies were compared: (a) healthy-cohort only; (b) adding ds004504 HC with leave-one-HC-out prediction; (c) ComBat harmonization~\cite{johnson2007,fortin2018} with age protected, fitted on healthy subjects only; and (d) both. \textbf{AD and FTD subjects were never used for training or harmonization}, and every HC prediction was out-of-fold. The final configuration was selected without AD labels: the model by healthy-cohort CV error, and the strategy by out-of-fold HC error. Age bias was corrected on HC predictions ($\hat{y}=a\,y+b$, corrected $=(\hat{y}-b)/a$)~\cite{delange2020}. BAG was mapped to $P(\mathrm{AD})$ by logistic regression under stratified 5-fold CV, with the bias correction refitted inside each fold.
+
+\subsection{CWT-scalogram CNN}
+Each clean epoch was converted to a Morlet continuous-wavelet scalogram: 40 log-spaced frequencies from 1 to 40\,Hz, with log power averaged into 64 time bins. This yields a $19\times40\times64$ tensor with EEG channels as input feature maps. Up to 150 evenly spaced epochs were used per subject. The CNN has three convolutional blocks (16--32--32 filters, $3\times3$ kernels, batch normalization, ReLU and max-pooling), global average pooling, dropout of 0.5 and a linear output; it has about 17k parameters. Training used Adam (learning rate $10^{-3}$, weight decay $10^{-3}$) and class-weighted binary cross-entropy. Early stopping was based on the loss of validation \emph{subjects} drawn from the training side of each fold. A subject's $P(\mathrm{AD})$ is the mean of its epoch probabilities.
+
+\subsection{Baselines, combination and explainability}
+On \emph{identical} subject folds we evaluated logistic regression, an RBF-SVM and a random forest on the 228 spectral features (hyper-parameters tuned by inner CV), and EEGNet~\cite{eegnet} on raw epochs. The CNN and the BAG were combined by stacking: logistic regression on $[\mathrm{logit}\,P_\mathrm{CNN},\mathrm{BAG}]$ under 20$\times$ repeated stratified 5-fold CV. Grad-CAM~\cite{gradcam} was computed on the last convolutional block. We report it both for the final model and out-of-fold, explaining each subject with the fold model that never saw them.
+
+\subsection{Evaluation}
+All evaluation is subject-independent: no subject contributes epochs to both training and test. The CNN was evaluated with 10-fold CV repeated with three seeds, each changing both the fold split and the initialization. We report AUC, accuracy, precision, recall, specificity and F1. Bootstrap 95\% CIs used 2000 subject resamples. Significance of the cross-validated AUC was assessed by permutation tests~\cite{ojala2010} that re-ran the entire CV on shuffled labels. Differences in AUC were assessed with a paired bootstrap.
+
+\section{Results}
+\subsection{Brain age}
+On the healthy cohort, the selected model (ridge, all features, strategy~(b)) reached MAE \dmMAE{} years ($r=\dmR{}$) in 10-fold CV. On ds004504 HC the out-of-fold MAE was \hcMAE{} years ($r=\hcR{}$; bias slope $a=\biasA{}$). The out-of-fold $R^2$ was \hcRtwo{}, which is expected for an HC age range of only 57--78 years; for that reason $R^2$ is not used as the success criterion. The bias-corrected BAG was $\bagHC{}\pm\bagHCsd{}$ years in HC, $\bagAD{}\pm\bagADsd{}$ in AD and $\bagFTD{}\pm\bagFTDsd{}$ in FTD (Fig.~\ref{fig:bag}). AD differed from HC (Welch $t=\bagWelchT{}$, \bagWelchP{}; Mann--Whitney \bagMwuP{}; $d=\bagD{}$, 95\% CI \bagDci{}). FTD did not differ from HC ($d=\ftdHCd{}$, \ftdHCp{}), and AD differed from FTD ($d=\adFTDd{}$, \adFTDp{}). The negative AD gap appeared in \nStableYounger{} of \nStable{} numerically stable configurations ($d$ from \stableDlo{} to \stableDhi{}). It persisted on ICA-cleaned data ($d=\icaD{}$, \icaP{}) and in a replication trained on 513 healthy subjects ($d=\repD{}$, permutation \repPermP{}, AD vs. FTD \repADFTDp{}). Within AD, BAG was not associated with MMSE ($\rho=\mmseRho{}$, \mmseP{}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\columnwidth]{bag_by_group.png}
+\caption{Bias-corrected brain-age gap by group. HC are out-of-fold; AD and FTD were never used for training.}
+\label{fig:bag}
+\end{figure}
+
+\emph{Why AD looks younger.} Table~\ref{tab:dir} compares, for each feature family, its correlation with age in the healthy cohort with the AD--HC effect size. Alpha peak frequency, alpha power and the theta/alpha ratio move in the same direction in aging and AD. However, beta power rises with age but falls in AD, and absolute slow-wave power and the aperiodic exponent fall with age but rise in AD. A model of healthy aging therefore places AD EEG off, and on balance ``before'', the normative trajectory.
+
+\begin{table}[t]
+\centering
+\caption{Healthy-aging direction vs. AD effect per feature family}
+\label{tab:dir}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccc}
+\toprule
+Feature & $r$ (age, healthy) & $d$ (AD$-$HC) & AD looks \\
+\midrule
+\tableinput{generated/table_directions.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+As a single-feature classifier, BAG reached AUC \bagAUC{} (95\% CI \bagAUCci{}, permutation \bagPermP{}), accuracy \bagAcc{}, recall \bagRec{} and specificity \bagSpec{}. The decision threshold was BAG $<\bagThr{}$ years.
+
+\subsection{CNN classification and baselines}
+Over three seeds the CNN achieved AUC \cnnAUC{} (range \cnnAUClo{}--\cnnAUChi{}), accuracy \cnnAcc{}, precision \cnnPrec{}, recall \cnnRec{}, specificity \cnnSpec{} and F1 \cnnFone{}. For the primary seed the AUC was \cnnPrimAUC{} (95\% CI \cnnPrimAUCci{}; permutation \cnnPermP{}, $N=\cnnPermN{}$, null mean \cnnPermNull{}). Table~\ref{tab:base} compares the CNN with baselines on identical folds. All models performed comparably (AUC \modelAUClo{}--\modelAUChi{}; highest: \bestModel{}, \bestModelAUC{}), and no difference from the CNN was significant (all paired-bootstrap $p \geq \minDiffP{}$). With $n=65$, models within about 0.1 AUC cannot be distinguished.
+
+\begin{table*}[t]
+\centering
+\caption{AD vs. HC on identical subject-level 10-fold splits (primary seed, $n=65$). Last column: CNN AUC minus baseline AUC (paired bootstrap).}
+\label{tab:base}
+\begin{tabular}{lcccccc}
+\toprule
+Model & AUC & Acc. (\%) & Recall (\%) & Spec. (\%) & F1 & $\Delta$AUC (CNN$-$model) \\
+\midrule
+\tableinput{generated/table_baselines.tex}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Combining CNN and brain age}
+Stacking the CNN with BAG gave AUC \combAUC{} versus \combCnnAUC{} for the CNN alone ($\Delta=\combDiff{}$, 95\% CI \combDiffCI{}, \combP{}). Both models draw on the same EEG slowing, so BAG adds interpretability rather than accuracy.
+
+\subsection{Ablations and three-class classification}
+Table~\ref{tab:abl} varies one design choice at a time (three seeds each). No single change reduced the mean AUC by more than \ablMaxDrop{}, a margin comparable to the variation between seeds. Using only 8--40\,Hz (AUC \ablFast{}) retained more information than using only 1--8\,Hz (\ablSlow{}). Collapsing the time axis (\ablNoTime{}) gave a small drop. Eight channels (\ablEight{}) and 40\% of the epochs (\ablSixty{}) remained close to the full model (\ablFull{}), suggesting that shorter recordings and low-density montages are viable.
+
+In the three-class task (HC/AD/FTD) the CNN reached balanced accuracy \mcCNNBalAcc{} (macro AUC \mcCNNMacroAUC{}) versus \mcRFBalAcc{} (\mcRFMacroAUC{}) for the random forest (Table~\ref{tab:conf3}). FTD was hardest (recall \mcRecFTD{}): \mcFTDasAD{} of \mcNFTD{} FTD subjects were classified as AD, consistent with the overlapping EEG slowing of the two dementias.
+
+\begin{table}[t]
+\centering
+\caption{Three-class CNN confusion matrix (primary seed; rows: true class)}
+\label{tab:conf3}
+\begin{tabular}{lccc}
+\toprule
+True $\backslash$ predicted & HC & AD & FTD \\
+\midrule
+\tableinput{generated/table_confusion3.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{CNN ablations (mean $\pm$ SD over seeds)}
+\label{tab:abl}
+\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Variant & AUC & Acc. (\%) & seeds \\
+\midrule
+\tableinput{generated/table_ablation.tex}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Explainability}
+Relative to the average across frequencies (1.0), final-model Grad-CAM importance for AD decisions was theta \gcFINALADtheta{}, alpha \gcFINALADalpha{}, delta \gcFINALADdelta{} and beta \gcFINALADbeta{}. For HC decisions it was alpha \gcFINALHCalpha{} and beta \gcFINALHCbeta{} (Fig.~\ref{fig:gradcam}). Out-of-fold Grad-CAM, from fold models that never saw the explained subject, reproduced this pattern: AD theta \gcOOFADtheta{} and alpha \gcOOFADalpha{} (delta \gcOOFADdelta{}), and HC alpha \gcOOFHCalpha{} and beta \gcOOFHCbeta{}. The most important channels for AD were temporo-parietal (\gcTopChAD{}).
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{cnn_gradcam.png}
+\caption{Grad-CAM of the final CNN: mean maps toward AD and HC and frequency profiles.}
+\label{fig:gradcam}
+\end{figure*}
+
+\section{Discussion}
+The brain-age framework assumes that disease moves a brain \emph{along} the healthy-aging trajectory. For resting-state EEG spectra in AD, our data contradict this. AD and normal aging share alpha slowing, but they diverge on slow-wave power, beta power and the aperiodic exponent, which is consistent with electrophysiological accounts that separate pathological slowing from normal aging~\cite{babiloni2020}. Sleep-EEG brain age has been reported elevated in dementia~\cite{sun2019}; differences in state, features and cohorts may explain the contrast. In practice, a negative BAG in AD should not be dismissed as model failure. Its magnitude still separates groups, and it is specific to AD versus FTD. However, it is better described as a deviation from normative aging, as in normative modeling, than as ``older brains''.
+
+The CNN met our target (AUC $\geq0.75$) but was statistically indistinguishable from spectral baselines and EEGNet, which is common for small EEG cohorts. Its value lies in end-to-end learning with time--frequency explanations that agree with known AD slowing.
+
+\emph{Limitations.} The target cohort is small ($n=65$ for AD vs. HC), so confidence intervals are wide~\cite{varoquaux2018}. There is no external test cohort. The healthy cohort ends at 70 years, whereas ds004504 HC reach 78. The two cohorts used different amplifiers, which we addressed by including target HC in training (ComBat did not help). ICA was not used in the main pipeline. BAG was not associated with MMSE. ds004504 contains no MCI subjects, so early detection and progression could not be studied.
+
+\section{Conclusion}
+Using strictly subject-independent evaluation on public data, we found that resting-state EEG brain age is \emph{lower}, not higher, in AD. This is a robust and AD-specific deviation from the healthy-aging EEG pattern, explained by opposite spectral changes in aging and AD. A compact CWT-scalogram CNN classified AD with AUC \cnnAUC{}, statistically indistinguishable from spectral baselines and EEGNet, and its Grad-CAM explanations emphasized theta and alpha. Code, models and all results are publicly available.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}
