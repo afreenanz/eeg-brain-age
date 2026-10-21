@@ -10,6 +10,7 @@ Run:  python -m src.preprocess
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import re
 from pathlib import Path
@@ -36,7 +37,8 @@ CONFIG = {
     "sfreq": 250.0,
     "epoch_sec": 4.0,
     "overlap_sec": 2.0,
-    "reject_ptp_uv": 150.0,    # peak-to-peak upper limit
+    # peak-to-peak upper limit; env override (inherited by worker processes) for sensitivity runs
+    "reject_ptp_uv": float(os.environ.get("EEG_REJECT_PTP_UV", 150.0)),
     "flat_ptp_uv": 1.0,        # peak-to-peak lower limit (dead channel)
     "min_duration_sec": 30.0,
     "min_epochs": 10,

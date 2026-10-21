@@ -22,7 +22,6 @@ OUT = data.ROOT / "research_q1_upgrade" / "08_robustness"
 
 
 def run(thr: float) -> dict:
-    preprocess.CONFIG["reject_ptp_uv"] = thr
     jobs = [j for j in preprocess.jobs() if j[3] == "raw"]
     Parallel(n_jobs=6)(delayed(preprocess.preprocess_cached)(*j) for j in jobs)
     feats = build_table("raw")
@@ -41,9 +40,26 @@ def run(thr: float) -> dict:
 
 
 def main() -> None:
+    """Each threshold runs in its own process with EEG_REJECT_PTP_UV set, so joblib workers
+    (which re-import src.preprocess) see the same value. A first version set CONFIG only in the
+    parent process, so all thresholds silently used 150 µV; it was caught because the three
+    results were identical, and discarded."""
+    import os
+    import subprocess
+    import sys
     OUT.mkdir(parents=True, exist_ok=True)
-    res = [run(t) for t in (100.0, 150.0, 200.0)]
-    preprocess.CONFIG["reject_ptp_uv"] = 150.0
+    if "EEG_REJECT_PTP_UV" in os.environ:            # child: one threshold
+        thr = float(os.environ["EEG_REJECT_PTP_UV"])
+        assert preprocess.CONFIG["reject_ptp_uv"] == thr
+        r = run(thr)
+        r["config_hash"] = preprocess.config_hash()
+        (OUT / f"threshold_{int(thr)}.json").write_text(json.dumps(r, indent=2, default=float))
+        return
+    for thr in (100, 150, 200):
+        subprocess.run([sys.executable, "-m", "src.q1.threshold_sens"], check=True,
+                       env={**os.environ, "EEG_REJECT_PTP_UV": str(thr)})
+    res = [json.loads((OUT / f"threshold_{t}.json").read_text()) for t in (100, 150, 200)]
+    assert len({r["config_hash"] for r in res}) == 3, "thresholds did not produce distinct caches"
     (OUT / "threshold_sensitivity.json").write_text(json.dumps(res, indent=2, default=float))
     print(pd.DataFrame(res).drop(columns=["n_subjects"]).round(3).to_string(index=False))
 

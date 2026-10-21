@@ -1,37 +1,49 @@
-# MASTER PROGRESS: Q1 upgrade
+# MASTER PROGRESS: Q1 upgrade (final state of this session)
 
-Branch: `q1-upgrade`. Plan: `01_research_plan/RESEARCH_IMPROVEMENT_PLAN.md`.
+Branch: `q1-upgrade` (main and the deployed app untouched). Plan: `01_research_plan/RESEARCH_IMPROVEMENT_PLAN.md`.
 
-## Status counts (24 tasks incl. B5)
-Completed: 15 (A0.1, L1-L6, E1, E2, B1, B2, B3, B5, R1, X3) · In progress: 3 (X1, X2, B4) ·
-Blocked: 1 (V1 external AD data: access required) · Remaining: 5 (LIT1 finalize, F1, Q1, M1, RV1)
+## Status
+Total tasks 24 · **Completed 23** · Blocked 1 (V1: independent AD cohort, needs CAUEEG/BrainLat access) · Remaining 0 executable.
 
-## Verified results so far (all from saved outputs)
-- **Data:** AD 36, HC 29, FTD 22 (sub-086 excluded); AD 67% female vs HC 38% (χ² p = 0.039); AD keeps fewer epochs (p = 0.024).
-- **Brain age (selected model):** healthy CV MAE 9.2 y (r = 0.60); HC OOF MAE 7.4 y.
-- **Leakage-free BAG:** d = −0.91 [−1.50, −0.44] with LOO bias correction; nested selection chooses the same strategy for all 87 subjects.
-- **Covariates:** AD effect −10.3 y (age + sex adjusted, p = 0.001); −9.2 y with epoch count (p = 0.003); residual and uncorrected variants give the same direction (p < 0.001).
-- **Sex effect within HC:** female BAG −5.5 vs male +3.5 y (p = 0.011). This is reported.
-- **Retrained permutation (N = 500):** p = 0.002.
-- **Stable configs, LOO + adjustment:** 12/12 negative; 7/12 significant after age/sex adjustment.
-- **Nested stacking:** CNN AUC 0.868, BAG 0.72 (vs chance p = 0.002), combined 0.869 (Δ = 0.001, p = 0.999).
-- **Full metrics (OOF, primary folds):** CNN AUC 0.86 [0.76, 0.94], PR-AUC 0.89, ECE 0.10; EEGNet 0.88; RF 0.86; SVM 0.85; LR 0.84; all Holm-adjusted p vs CNN = 1.0.
-- **Normative deviation (B3):** AD vs HC d = +1.37 [0.94, 1.95], AUC 0.83; FTD also deviates (d = 1.09); AD vs FTD n.s.
-- **Feature families (B5, pre-registered):** 11/12 single-family models follow the predicted direction (sign test p = 0.006); alpha-only → AD older (d = +0.65, p = 0.002), reproducing Otero et al. 2026; slow-wave → younger (−0.97); aperiodic → younger (−0.84).
+## Experiments executed (all outputs saved)
+Data audit · leakage guards + 12 tests · LOO bias correction · nested strategy selection · covariate
+models (age, sex, epochs) · alternative bias corrections · age-range error · retrained permutation
+(N = 500) · fully nested stacking (60 CNN trainings) · full metrics with CIs, calibration, Holm ·
+subgroups · normative-deviation model · pre-registered feature-family brain age · occlusion +
+Grad-CAM stability (3 seeds) · artifact thresholds 100/150/200 µV · sex-stratified BAG.
 
-## Experiments failed / bugs found
-- Cross-dataset ID join bug in baselines (fixed before any result was produced).
-- First nested-stacking test failed on a feature-name bug (fixed).
+## Failed experiments / bugs (recorded)
+1. Cross-dataset ID join in baselines (caught by a crash; fixed before results).
+2. Nested-stacking feature-name bug (fixed).
+3. **Threshold sensitivity v1 invalid:** joblib workers ignored the parent's CONFIG change, so all
+   thresholds ran at 150 µV. Detected because the results were identical; fixed with an env
+   override and a distinct-cache assertion; rerun.
 
-## Manuscript sections revised
-None yet (M1 pending).
+## Verified key results
+- BAG (leakage-free) d = −0.91 [−1.50, −0.44]; adjusted −10.3 y (p = 0.001); retrained permutation p = 0.002;
+  threshold range d −0.64 to −0.91 (all p ≤ 0.02); men d = −1.00 (p = 0.017), women d = −0.58 (p = 0.12).
+- Feature-family (pre-registered): 11/12 directions predicted (p = 0.006); alpha-only AD older (d = +0.65).
+- Normative deviation AUC 0.83 (d = 1.37) vs BAG 0.70; also deviant in FTD.
+- CNN mean AUC 0.89; models indistinguishable (Holm p = 1.00); nested stacking ΔAUC 0.001 (p = 1.00).
+- Grad-CAM stable (r 0.94-0.99) but not faithful: occlusion shows beta/delta necessary, theta not.
 
-## Outstanding scientific concerns
-- No independent AD cohort (V1 blocked).
-- Small n (65); wide CIs.
-- Sex imbalance (adjusted, but residual confounding is possible).
-- Early-stopping decision made after seeing outer-fold output (disclosed; sensitivity run reported).
+## What changed vs the previous paper (see 12_revised_manuscript/main.pdf)
+- New title and central claim: BAG sign is feature-dependent (reconciles Otero et al. 2026).
+- The scalar BAG is reframed; the normative-deviation score is added as the stronger summary.
+- Leakage fixes applied; numbers updated (d −0.93 → −0.91, etc.).
+- Covariate, threshold, sex-stratified, permutation and nested-stacking evidence added.
+- **Grad-CAM claim corrected** ("theta/alpha drive AD decisions" is no longer stated; occlusion reported).
+- CNN reframed as comparable to baselines; calibration and PR-AUC added.
+- Literature updated with 6 new verified references (incl. the conflicting study).
+- Full disclosure of decisions made after seeing results.
+
+## Unresolved: needs human decisions or data
+1. **Independent AD cohort (V1):** request CAUEEG (needs local ethics approval) and BrainLat (Synapse).
+2. **Author contributions (CRediT), funding statement, AI-use wording:** red placeholders in the manuscript.
+3. **Target journal:** confirm the quartile on SJR/JCR (automated SJR access blocked); reformat to its template.
+4. **Pushing this branch to the public GitHub repo** publishes the revised draft. Awaiting author permission.
+5. Optional: source-space alpha analysis; larger CNN permutation count (≥1000); GAMLSS normative model.
 
 ## Resume instructions
-`git checkout q1-upgrade`. Pending outputs: `07_explainability/xai_validation.json`, `08_robustness/threshold_sensitivity.json`.
-Then: F1 figures → Q1 consistency checker → M1 manuscript (`research_q1_upgrade/12_revised_manuscript`) → RV1 reviewer reports.
+`git checkout q1-upgrade`; run commands in `13_reproducibility/REPRODUCE.md`. Every manuscript
+number regenerates via `python -m src.q1.manuscript_numbers`; verify with `python -m src.q1.consistency`.
