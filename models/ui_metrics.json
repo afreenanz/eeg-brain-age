@@ -1,0 +1,53 @@
+{
+  "classification_cnn": {
+    "AUC": 0.8582375478927203,
+    "accuracy": 0.8,
+    "precision_AD": 0.8108108108108109,
+    "recall_AD": 0.8333333333333334,
+    "specificity": 0.7586206896551724,
+    "F1": 0.821917808219178,
+    "n": 65,
+    "AUC_CI95": [
+      0.7567049808429119,
+      0.938721264367816
+    ],
+    "accuracy_CI95": [
+      0.6923076923076923,
+      0.8923076923076924
+    ],
+    "AUC_mean_3_seeds": 0.8879310344827586,
+    "accuracy_mean_3_seeds": 0.8205128205128206,
+    "permutation_p": 0.009900990099009901,
+    "permutation_n": 100,
+    "validation": "subject-level 10-fold cross-validation, AD vs HC"
+  },
+  "regression_brain_age": {
+    "AUC": 0.6992337164750957,
+    "accuracy": 0.6615384615384615,
+    "precision_AD": 0.6842105263157895,
+    "recall_AD": 0.7222222222222222,
+    "specificity": 0.5862068965517241,
+    "F1": 0.7027027027027027,
+    "n": 65.0,
+    "AUC_CI95": [
+      0.5613026819923372,
+      0.8189655172413793
+    ],
+    "permutation_p": 0.001998001998001998,
+    "HC_MAE_years": 7.362581635066308,
+    "cohen_d_AD_vs_HC": -0.9267851608974741,
+    "validation": "stratified 5-fold cross-validation of BAG -> P(AD), AD vs HC"
+  },
+  "combined": {
+    "AUC": 0.8706896551724138,
+    "accuracy": 0.7846153846153846,
+    "precision_AD": 0.8055555555555556,
+    "recall_AD": 0.8055555555555556,
+    "specificity": 0.7586206896551724,
+    "F1": 0.8055555555555556,
+    "n": 65,
+    "AUC_diff_vs_cnn": 0.01245210727969348,
+    "AUC_diff_p": 0.736,
+    "validation": "20x repeated stratified 5-fold stacking of CNN + BAG"
+  }
+}
