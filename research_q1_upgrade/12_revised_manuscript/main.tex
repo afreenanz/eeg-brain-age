@@ -7,17 +7,17 @@
 
 \begin{document}
 
-\title{Older or Younger? The Sign of the EEG Brain-Age Gap in Alzheimer's Disease Depends on the Spectral Features: A Leakage-Audited Normative Analysis}
+\title{Explainable Classification and Brain-Age Regression of Resting-State EEG in Alzheimer's Disease: The Sign of the Brain-Age Gap Depends on Spectral Features}
 
 \author{Aayush~Soni, Aamal~Magdum, Afreen~Anz, and~Aparna~Sankar%
 \thanks{The authors are with the Department of Computer Science and Engineering, B.\,M.\,S. College of Engineering, Bengaluru, India.}}
 
-\markboth{}{Soni \MakeLowercase{\textit{et al.}}: The sign of the EEG brain-age gap in Alzheimer's disease}
+\markboth{}{Soni \MakeLowercase{\textit{et al.}}: Explainable classification and brain-age regression of EEG in AD}
 \maketitle
 
 % =====================================================================
 \begin{abstract}
-\emph{Background:} EEG brain-age models trained on healthy adults are expected to show ``accelerated aging'' in neurodegeneration, and alpha-band EEG studies report positive brain-age gaps (BAG) in Alzheimer's disease (AD). We tested this expectation with a full-spectrum resting-state model under an audited, leakage-controlled protocol.
+\emph{Background:} Resting-state EEG supports two complementary approaches to Alzheimer's disease (AD): discriminative classification, and normative brain-age regression, whose brain-age gap (BAG) is expected to show ``accelerated aging''; alpha-band EEG studies report positive BAG in AD. We developed and evaluated both approaches under an audited, leakage-controlled protocol.
 \emph{Methods:} A ridge brain-age model was trained on healthy adults (Dortmund Vital Study, $n=\nDort{}$, 20--70 years) and transferred to a clinical cohort (OpenNeuro ds004504: \nAD{} AD, \nHC{} healthy controls [HC], \nFTD{} frontotemporal dementia [FTD]). Patients were never used for training, harmonization, bias correction or model selection. We report leave-one-HC-out bias correction, nested model selection, age/sex adjustment, a permutation test that retrains the model ($N=\bagPermN{}$), an external healthy cohort (MPI-LEMON, $n=\nLemon{}$), a pre-registered feature-family analysis and a multivariate normative-deviation model. A CWT-scalogram CNN and four baselines were evaluated on identical subject-level folds, with nested stacking and occlusion-tested Grad-CAM.
 \emph{Results:} The full-spectrum BAG was negative in AD ($d=\bagD{}$, 95\% CI \bagDci{}; age- and sex-adjusted difference \adjCoef{} years, \adjP{}; permutation \bagPermP{}). It was absent in FTD ($d=\bagFTDd{}$) and not shown by healthy older adults from an independent site. The sign depended on the features: alpha-only models made AD look older ($d=\famAlphaD{}$), slow-wave and aperiodic models made it look younger ($d=\famSlowD{}$, \famAperD{}), and \famAgree{} single-family models followed a pre-registered direction prediction (sign test \famSignP{}). A multivariate normative-deviation score separated AD from HC better than BAG (AUC \normAUC{} vs.\ \bagAUC{}) but also deviated in FTD. The CNN reached AUC \cnnAUC{} (three seeds), statistically indistinguishable from spectral baselines and EEGNet. BAG added no information to the CNN in nested stacking (\nestDiffP{}). Grad-CAM was stable across seeds, but occlusion did not confirm its emphasis on theta.
 \emph{Conclusion:} The direction of the EEG brain-age gap in AD is a property of the feature set, not of the disease. AD EEG is better described as a multivariate deviation from normative aging than as accelerated or delayed aging. Validation in an independent AD cohort is needed.
@@ -36,10 +36,10 @@ The accelerated-aging interpretation assumes that disease moves the EEG \emph{al
 We therefore asked four questions under an audited, leakage-controlled protocol. (Q1) What is the sign of a full-spectrum resting-state BAG in AD, and does it survive leakage control, covariates and an external healthy site? (Q2) Does the sign depend on the spectral features of the age model, as predicted from feature-wise aging and disease directions? (Q3) Is a multivariate normative-deviation score more informative than a scalar BAG? (Q4) How does an explainable CWT-scalogram CNN compare with baselines, and do BAG or Grad-CAM add reliable information?
 
 Our contributions are:
-(i) a full-spectrum BAG that is robustly negative in AD under extensive leakage control;
-(ii) a pre-registered demonstration that the BAG sign is feature-dependent, which reconciles our result with positive alpha-based gaps;
-(iii) evidence that a multivariate normative-deviation score outperforms the scalar BAG but is not AD-specific;
-(iv) an honest benchmark of an explainable CNN, including nested stacking and occlusion tests of Grad-CAM.
+(i) an explainable classification module (CWT-scalogram CNN) benchmarked against four baselines on identical subject folds, with nested stacking and occlusion-validated Grad-CAM;
+(ii) a normative brain-age regression module whose full-spectrum BAG is robustly negative in AD under extensive leakage control;
+(iii) a pre-registered demonstration that the BAG sign is feature-dependent, which reconciles our result with positive alpha-based gaps;
+(iv) evidence that a multivariate normative-deviation score outperforms the scalar BAG but is not AD-specific, and that BAG adds interpretability rather than accuracy to the classifier.
 
 % =====================================================================
 \section{Related Work}
