@@ -121,7 +121,59 @@ def audit_figure() -> None:
     fig.tight_layout(); fig.savefig(FIG / "fig_brainage_audit.png", dpi=300); plt.close(fig)
 
 
+
+
+def audited_bag_figures() -> None:
+    """Re-draw the original BAG-by-group, robustness and MMSE figures with the audited
+    (leave-one-HC-out, nested) BAG instead of the in-sample HC correction."""
+    from scipy.stats import mannwhitneyu, spearmanr
+    p = pd.read_csv(Q / "05_brain_age_analysis" / "bag_audited_selected_config.csv")
+    a = json.loads((Q / "05_brain_age_analysis" / "brainage_audit.json").read_text())
+    g3 = [("C", "HC", "#009e73"), ("A", "AD", OLDER), ("F", "FTD", GREY)]
+    fig, ax = plt.subplots(figsize=(5.2, 3.8))
+    vals = [p[p.group == g].bag_nested.values for g, _, _ in g3]
+    parts = ax.violinplot(vals, showextrema=False)
+    for b, (_, _, c) in zip(parts["bodies"], g3):
+        b.set_facecolor(c); b.set_alpha(0.3)
+    ax.boxplot(vals, widths=0.15, showfliers=False)
+    rng = np.random.default_rng(42)
+    for i, (v, (_, _, c)) in enumerate(zip(vals, g3), 1):
+        ax.scatter(i + rng.uniform(-.07, .07, len(v)), v, s=12, color=c, zorder=3)
+    ax.axhline(0, color="grey", lw=0.8, ls="--")
+    ax.set_xticks([1, 2, 3], [f"{n}\n(n={len(v)})" for (_, n, _), v in zip(g3, vals)])
+    ax.set_ylabel("Brain-age gap (years, LOO bias-corrected)")
+    L = a["L3_nested_selection_and_loo_correction"]
+    ax.set_title(f"AD vs HC: d = {L['d_AD_HC']:.2f}, Mann-Whitney p = {L['mwu_p']:.4f}", fontsize=9)
+    fig.tight_layout(); fig.savefig(FIG / "fig_bag_by_group_audited.png", dpi=300); plt.close(fig)
+
+    st = pd.read_csv(Q / "05_brain_age_analysis" / "stable_configs_loo_adjusted.csv")
+    st["label"] = st.features + " / " + st.model + " / " + st.strategy.str.split("_").str[0]
+    st = st.sort_values("d_AD_HC")
+    fig, ax = plt.subplots(figsize=(5.2, 0.3 * len(st) + 1.2))
+    ax.barh(st.label, st.d_AD_HC, color=[YOUNGER if q < 0.05 else GREY for q in st.adj_p])
+    ax.axvline(0, color="black", lw=0.8); ax.invert_yaxis()
+    ax.set_xlabel("Cohen's d of brain-age gap, AD − HC (LOO correction)")
+    ax.set_title("Stable configurations (blue: age/sex-adjusted p < 0.05)", fontsize=9)
+    ax.tick_params(axis="y", labelsize=7)
+    fig.tight_layout(); fig.savefig(FIG / "fig_bag_robustness_audited.png", dpi=300); plt.close(fig)
+
+    meta = data.adftd_participants()[["subject_id", "mmse"]]
+    m = p.drop(columns=[c for c in ["mmse"] if c in p]).merge(meta, on="subject_id")
+    fig, ax = plt.subplots(figsize=(5, 3.8))
+    for g, n, c in g3:
+        s_ = m[m.group == g]
+        ax.scatter(s_.mmse, s_.bag_nested, s=16, color=c, label=n)
+    ad = m[m.group == "A"]
+    rho, pv = spearmanr(ad.bag_nested, ad.mmse)
+    k, b = np.polyfit(ad.mmse, ad.bag_nested, 1)
+    xs = np.array([ad.mmse.min(), ad.mmse.max()])
+    ax.plot(xs, k * xs + b, color=OLDER)
+    ax.axhline(0, color="grey", lw=0.8, ls="--")
+    ax.set_xlabel("MMSE (lower = more impaired)"); ax.set_ylabel("Brain-age gap (years)")
+    ax.set_title(f"AD: Spearman rho = {rho:.2f}, p = {pv:.2f}", fontsize=9); ax.legend(fontsize=7)
+    fig.tight_layout(); fig.savefig(FIG / "fig_bag_vs_mmse_audited.png", dpi=300); plt.close(fig)
+
 if __name__ == "__main__":
     FIG.mkdir(parents=True, exist_ok=True)
-    family_figure(); normative_figure(); forest_figure(); audit_figure()
+    family_figure(); normative_figure(); forest_figure(); audit_figure(); audited_bag_figures()
     print("figures written")

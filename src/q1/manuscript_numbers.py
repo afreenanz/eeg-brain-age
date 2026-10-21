@@ -185,6 +185,52 @@ def main() -> None:
     m("mcBalAcc", pc(mc["cnn"]["balanced_accuracy"])); m("mcAUC", f(mc["cnn"]["macro_AUC_ovr"]))
     m("mcRFBalAcc", pc(mc["rf"]["balanced_accuracy"]))
 
+
+    # ---- content restored from the earlier journal draft (verified, unaffected by the audit)
+    import shutil
+    for tb in ("table_cohorts", "table_cnn_seeds", "table_ablation", "table_confusion3", "table_directions"):
+        shutil.copy(data.ROOT / "paper" / "generated" / f"{tb}.tex", GEN / f"{tb}.tex")
+    lr = s["logistic_cv"]
+    m("bagAcc", pc(lr["accuracy"])); m("bagPrec", pc(lr["precision_AD"])); m("bagRec", pc(lr["recall_AD"]))
+    m("bagSpec", pc(lr["specificity"])); m("bagFone", f(lr["F1"]))
+    m("bagThr", f(s["logistic_final"]["bag_threshold_p50"], 1))
+    m("biasA", f(json.loads((data.ROOT / "models" / "bias_correction.json").read_text())["a"]))
+    m("cnnPrec", pc(mean["precision_AD"])); m("cnnRec", pc(mean["recall_AD"])); m("cnnSpecM", pc(mean["specificity"]))
+    m("cnnFone", f(mean["F1"]))
+    rcv = pd.read_csv(R / "replication_n513" / "dortmund_cv.csv")
+    rs = rep["selection"]
+    rr = rcv[(rcv.features == rs["features"]) & (rcv.model == rs["model"])].iloc[0]
+    m("repDmMAE", f(rr.MAE, 1)); m("repDmR", f(rr.r)); m("repHCMAE", f(rep["bag"]["HC_MAE_raw"], 1))
+    m("repAUC", f(rep["logistic_cv"]["AUC"]))
+    m("repADFTDp", pv(rep["ftd_specificity"]["AD_vs_FTD"]["mwu_p"]))
+    m("repPermP", pv(rep["bootstrap_permutation"]["perm_p_cv_AUC"]))
+    llog = pd.read_csv(R / "external" / "lemon_epochs_log.csv")
+    m("lemNavail", str(len(llog))); m("lemN", str(l1["LEMON_n"]))
+    for k_, n_ in [("LEMON HC", "Lem"), ("ds004504 HC", "Hc"), ("ds004504 AD", "Ad")]:
+        m(f"rawGap{n_}", f(l1["mean_raw_gap"][k_], 1)); m(f"rawGap{n_}sd", f(l1["sd_raw_gap"][k_], 1))
+    m("ltwoMAE", f(l2["healthy_cv_MAE"], 1)); m("ltwoHCMAE", f(l2["bag"]["HC_MAE_raw"], 1))
+    m("ltwoAUC", f(l2["logistic_AUC"])); m("ltwoFTDd", f(l2["bag"]["cohen_d_FTD_vs_HC"]))
+    m("ltwoStable", str(l2["n_stable_configs"])); m("ltwoStableYounger", str(l2["n_stable_configs_AD_younger"]))
+    m("icaP", pv(s["sensitivity_ica_derivatives"]["mwu_p"]))
+    gfin = json.loads((R / "classifier" / "gradcam_summary.json").read_text())
+    m("gcTopChAD", ", ".join(gfin["AD"]["top_channels"][:4]))
+    for b_ in ("delta", "theta", "alpha", "beta"):
+        m(f"gcFin{b_.capitalize()}AD", f(gfin["AD"]["band_importance_vs_average"][b_]))
+        m(f"gcFin{b_.capitalize()}HC", f(gfin["HC"]["band_importance_vs_average"][b_]))
+    cb = json.loads((R / "classifier" / "combined_metrics.json").read_text())
+    m("rcvCombAUC", f(cb["combined"]["AUC"])); m("rcvCnnAUC", f(cb["cnn_only"]["AUC"]))
+    m("rcvP", pv(cb["combined_vs_cnn_AUC"]["p_two_sided"]))
+    m("mcMacroF", f(mc["cnn"]["macro_F1"])); m("mcRFAUC", f(mc["rf"]["macro_AUC_ovr"]))
+    mcr = json.loads((R / "classifier" / "multiclass_metrics.json").read_text())["runs"][0]["cnn"]
+    m("mcRecHC", pc(mcr["recall_per_class"]["HC"])); m("mcRecAD", pc(mcr["recall_per_class"]["AD"]))
+    m("mcRecFTD", pc(mcr["recall_per_class"]["FTD"]))
+    conf = mcr["confusion_rows_true_HC_AD_FTD"]
+    m("mcFTDasAD", str(conf[2][1])); m("mcNFTD", str(sum(conf[2])))
+    cfg = json.loads((data.ROOT / "models" / "cnn_config.json").read_text())
+    m("cnnFinalEpochs", str(cfg["epochs"]))
+    va = J("08_robustness/cnn_valauc_stopping.json")
+    m("valAucRunAUC", f(va["AUC"])); m("valAucRunAcc", pc(va["accuracy"]))
+
     # tables
     rows = []
     names = [("cnn_scalogram", "CWT-scalogram CNN"), ("eegnet", "EEGNet"), ("rf", "Random forest"),

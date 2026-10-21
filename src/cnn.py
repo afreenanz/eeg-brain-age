@@ -83,7 +83,7 @@ def subject_probs(p_epoch, owner):
     return pd.Series(p_epoch).groupby(owner).mean()
 
 
-def train_one(Xtr, ytr, Xva, yva, own_va, seed, make_model=None):
+def train_one(Xtr, ytr, Xva, yva, own_va, seed, make_model=None, stop_on: str = "loss"):
     """Train with early stopping on validation loss (validation subjects only).
     Val AUC on ~9 subjects saturates at 1.0 after 1-2 epochs, so it cannot pick an epoch."""
     torch.manual_seed(seed)
@@ -116,7 +116,8 @@ def train_one(Xtr, ytr, Xva, yva, own_va, seed, make_model=None):
             torch.tensor(p_va).clamp(1e-6, 1 - 1e-6), torch.tensor(yva, dtype=torch.float32)))
         history.append({"epoch": ep + 1, "train_loss": tot / len(idx), "val_loss": vloss,
                         "val_auc": auc})
-        if vloss < best[1]:
+        improved = (vloss < best[1]) if stop_on == "loss" else ((auc, -vloss) > (best[0], -best[1]))
+        if improved:
             best, bad = (auc, vloss), 0
             best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
         else:
@@ -141,7 +142,7 @@ def metrics(y, p, thr=0.5) -> dict:
 def cross_validate(seed: int = SEED, verbose: bool = True,
                    permute_seed: int | None = None, transform=None,
                    make_model=None, explain: bool = False,
-                   occlude: dict | None = None) -> tuple[pd.DataFrame, list]:
+                   occlude: dict | None = None, stop_on: str = "loss") -> tuple[pd.DataFrame, list]:
     """permute_seed: shuffle AD/HC labels across subjects (permutation test null run).
     transform: function applied to each subject's scalogram array (ablations).
     make_model: model factory (default ScalogramCNN).
@@ -170,7 +171,7 @@ def cross_validate(seed: int = SEED, verbose: bool = True,
         Xt, _, ot = stack(te_ids, S)
         mu, sd = norm_stats(Xf)
         Xf, Xv, Xt = (Xf - mu) / sd, (Xv - mu) / sd, (Xt - mu) / sd
-        model, h = train_one(Xf, yf, Xv, yv, ov, seed + fold, make_model=make_model)
+        model, h = train_one(Xf, yf, Xv, yv, ov, seed + fold, make_model=make_model, stop_on=stop_on)
         ps = subject_probs(predict_epochs(model, Xt), ot)
         cams = {}
         if explain:
