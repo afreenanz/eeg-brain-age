@@ -1,3 +1,71 @@
 outer fold 1: 7 test subjects (124s)
 outer fold 2: 7 test subjects (137s)
 outer fold 3: 7 test subjects (141s)
+outer fold 4: 7 test subjects (129s)
+outer fold 5: 7 test subjects (146s)
+outer fold 6: 6 test subjects (124s)
+outer fold 7: 6 test subjects (114s)
+outer fold 8: 6 test subjects (120s)
+outer fold 9: 6 test subjects (92s)
+outer fold 10: 6 test subjects (104s)
+{
+  "cnn_only": {
+    "AUC": 0.8678160919540231,
+    "accuracy": 0.7846153846153846,
+    "balanced_accuracy": 0.782088122605364,
+    "precision_AD": 0.8055555555555556,
+    "recall_AD": 0.8055555555555556,
+    "specificity": 0.7586206896551724,
+    "F1": 0.8055555555555556,
+    "TP": 29,
+    "FN": 7,
+    "TN": 22,
+    "FP": 7,
+    "n": 65
+  },
+  "bag_only": {
+    "AUC": 0.7203065134099617,
+    "accuracy": 0.6461538461538462,
+    "balanced_accuracy": 0.6403256704980842,
+    "precision_AD": 0.6756756756756757,
+    "recall_AD": 0.6944444444444444,
+    "specificity": 0.5862068965517241,
+    "F1": 0.684931506849315,
+    "TP": 25,
+    "FN": 11,
+    "TN": 17,
+    "FP": 12,
+    "n": 65
+  },
+  "combined": {
+    "AUC": 0.8687739463601533,
+    "accuracy": 0.7384615384615385,
+    "balanced_accuracy": 0.7370689655172413,
+    "precision_AD": 0.7714285714285715,
+    "recall_AD": 0.75,
+    "specificity": 0.7241379310344828,
+    "F1": 0.7605633802816901,
+    "TP": 27,
+    "FN": 9,
+    "TN": 21,
+    "FP": 8,
+    "n": 65
+  },
+  "combined_minus_cnn_AUC": {
+    "diff": 0.0009578544061301653,
+    "CI95": [
+      -0.07211312912261682,
+      0.0680131242858103
+    ],
+    "p_two_sided": 0.999
+  },
+  "bag_minus_chance": {
+    "diff": 0.22030651340996166,
+    "CI95": [
+      0.09415014539540151,
+      0.33617464826839827
+    ],
+    "p_two_sided": 0.002
+  }
+}
+DONE

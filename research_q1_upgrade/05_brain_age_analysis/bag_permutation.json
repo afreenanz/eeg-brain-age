@@ -1,0 +1,9 @@
+{
+  "statistic": "Cohen's d (AD - HC) of LOO-corrected BAG, retrained per permutation",
+  "real_d": -0.9126659677116677,
+  "n_permutations": 500,
+  "null_mean": 0.0462736790265005,
+  "null_sd": 0.2753791905464645,
+  "p_two_sided": 0.001996007984031936,
+  "p_one_sided_negative": 0.001996007984031936
+}

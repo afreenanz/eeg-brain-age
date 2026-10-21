@@ -2,3 +2,16 @@
 [Parallel(n_jobs=6)]: Done   6 tasks      | elapsed:    9.7s
 [Parallel(n_jobs=6)]: Done  60 tasks      | elapsed:  1.7min
 [Parallel(n_jobs=6)]: Done 150 tasks      | elapsed:  5.1min
+[Parallel(n_jobs=6)]: Done 276 tasks      | elapsed:  9.7min
+[Parallel(n_jobs=6)]: Done 438 tasks      | elapsed: 15.8min
+[Parallel(n_jobs=6)]: Done 500 out of 500 | elapsed: 18.1min finished
+{
+  "statistic": "Cohen's d (AD - HC) of LOO-corrected BAG, retrained per permutation",
+  "real_d": -0.9126659677116677,
+  "n_permutations": 500,
+  "null_mean": 0.0462736790265005,
+  "null_sd": 0.2753791905464645,
+  "p_two_sided": 0.001996007984031936,
+  "p_one_sided_negative": 0.001996007984031936
+}
+DONE

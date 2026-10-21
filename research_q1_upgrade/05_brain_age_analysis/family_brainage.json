@@ -1,0 +1,157 @@
+{
+  "table": [
+    {
+      "feature_set": "iaf",
+      "n_features": 19,
+      "bias_slope_a": -0.1192886394967185,
+      "d_AD_HC_cole": -1.2056941063674547,
+      "d_AD_HC_residual": 1.2257573940851978,
+      "mwu_p_residual": 1.7425593434989808e-05,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "rel_alpha",
+      "n_features": 19,
+      "bias_slope_a": 0.420796094896767,
+      "d_AD_HC_cole": 0.3633853652338995,
+      "d_AD_HC_residual": 0.37798835839291306,
+      "mwu_p_residual": 0.0220419857754852,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "abs_alpha",
+      "n_features": 19,
+      "bias_slope_a": 0.3521448807848769,
+      "d_AD_HC_cole": 0.8839115790597873,
+      "d_AD_HC_residual": 0.9025857763676647,
+      "mwu_p_residual": 0.00019293339339628438,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "tar",
+      "n_features": 19,
+      "bias_slope_a": 0.28279288084188187,
+      "d_AD_HC_cole": -0.33730157483423384,
+      "d_AD_HC_residual": -0.34477707812243286,
+      "mwu_p_residual": 0.20284403143260066,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "rel_theta",
+      "n_features": 19,
+      "bias_slope_a": -0.10881017725406966,
+      "d_AD_HC_cole": 0.7259105983071613,
+      "d_AD_HC_residual": -0.7139041483961006,
+      "mwu_p_residual": 0.004644450483845935,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "abs_theta",
+      "n_features": 19,
+      "bias_slope_a": 0.10210821336668813,
+      "d_AD_HC_cole": -0.9229697257715038,
+      "d_AD_HC_residual": -0.9305574058929786,
+      "mwu_p_residual": 0.0002501463321794164,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "rel_delta",
+      "n_features": 19,
+      "bias_slope_a": 0.1632458612558603,
+      "d_AD_HC_cole": 0.3172297636281847,
+      "d_AD_HC_residual": 0.2861795783955808,
+      "mwu_p_residual": 0.1376394210027462,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "abs_delta",
+      "n_features": 19,
+      "bias_slope_a": 0.13763960514293058,
+      "d_AD_HC_cole": -0.9981728516125479,
+      "d_AD_HC_residual": -0.9698190946497588,
+      "mwu_p_residual": 0.0003950945724641678,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "rel_beta",
+      "n_features": 19,
+      "bias_slope_a": 0.24065731769722046,
+      "d_AD_HC_cole": -0.8281090094686897,
+      "d_AD_HC_residual": -0.8383878344723821,
+      "mwu_p_residual": 0.0015044243648216506,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "abs_beta",
+      "n_features": 19,
+      "bias_slope_a": -0.05849499313840073,
+      "d_AD_HC_cole": -0.22929293336047077,
+      "d_AD_HC_residual": 0.8220036013717473,
+      "mwu_p_residual": 0.00642746622301906,
+      "predicted_AD_direction": "older (+)",
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "apexp",
+      "n_features": 19,
+      "bias_slope_a": 0.2382776107346692,
+      "d_AD_HC_cole": -0.7612364036404775,
+      "d_AD_HC_residual": -0.7404631424390364,
+      "mwu_p_residual": 0.007241110650947942,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "apoff",
+      "n_features": 19,
+      "bias_slope_a": 0.27285174936668594,
+      "d_AD_HC_cole": -0.8900122301680344,
+      "d_AD_HC_residual": -0.8732303548365056,
+      "mwu_p_residual": 0.0013732162277651126,
+      "predicted_AD_direction": "younger (-)",
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "alpha_set (rel+abs alpha, alpha peak)",
+      "n_features": 57,
+      "bias_slope_a": 0.23128490266287674,
+      "d_AD_HC_cole": 0.6524363179741046,
+      "d_AD_HC_residual": 0.6465975681030504,
+      "mwu_p_residual": 0.0024563770970473407,
+      "predicted_AD_direction": null,
+      "observed_direction": "older (+)"
+    },
+    {
+      "feature_set": "slow_set (delta+theta)",
+      "n_features": 76,
+      "bias_slope_a": 0.2861392314940846,
+      "d_AD_HC_cole": -0.9549163488516842,
+      "d_AD_HC_residual": -0.9718327188397947,
+      "mwu_p_residual": 0.00011335827597487518,
+      "predicted_AD_direction": null,
+      "observed_direction": "younger (-)"
+    },
+    {
+      "feature_set": "aperiodic_set",
+      "n_features": 38,
+      "bias_slope_a": 0.2834173852792034,
+      "d_AD_HC_cole": -0.8533399305946732,
+      "d_AD_HC_residual": -0.8388859645090302,
+      "mwu_p_residual": 0.0023512060070049606,
+      "predicted_AD_direction": null,
+      "observed_direction": "younger (-)"
+    }
+  ],
+  "single_family_direction_agreement": "11/12",
+  "sign_test_p": 0.00634765625,
+  "note": "residual (pred - (a*age+b)) correction is reported alongside Cole because single-family models can have small bias slopes a, which make (pred-b)/a unstable."
+}
