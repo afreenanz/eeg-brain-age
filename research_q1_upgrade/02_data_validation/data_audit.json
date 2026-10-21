@@ -1,0 +1,76 @@
+{
+  "ds004504": {
+    "participants_tsv_rows": 88,
+    "unique_ids": 88,
+    "groups": {
+      "A": 36,
+      "C": 29,
+      "F": 23
+    },
+    "excluded": [
+      {
+        "subject_id": "sub-086",
+        "group": "F",
+        "status": "error: Only 4 of 326 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 10. The recording may be too noisy or not in volts."
+      }
+    ],
+    "sfreq_values": [
+      500.0
+    ]
+  },
+  "AD_vs_HC_tests": {
+    "age_mwu_p": 0.3829952682929384,
+    "sex_chi2_p": 0.039412896524091585,
+    "duration_mwu_p": 0.5221346003590319,
+    "kept_fraction_mwu_p": 0.16384317526344805,
+    "n_epochs_kept_mwu_p": 0.024436205336705628,
+    "median_ptp_mwu_p": 0.6300311927229357
+  },
+  "dortmund": {
+    "selected": 200,
+    "unique_ids": 200,
+    "ok": 200,
+    "failed": [],
+    "age_range": [
+      22,
+      70
+    ],
+    "female": 121,
+    "sfreq_values": [
+      1000.0
+    ],
+    "kept_fraction_mean": 0.903800882205418
+  },
+  "lemon": {
+    "available": 71,
+    "ok": 70,
+    "failed": [
+      {
+        "subject_id": "sub-010285",
+        "status": "error: No eyes-closed markers (S210) found."
+      }
+    ],
+    "kept_fraction_mean": 0.9507385646031311
+  },
+  "near_duplicate_check": {
+    "max_between_subject_feature_correlation": 0.9637394406887068,
+    "top_pairs": [
+      {
+        "a": "ds004504:sub-024",
+        "b": "ds004504:sub-028",
+        "r": 0.9637394406887068
+      },
+      {
+        "a": "ds004504:sub-029",
+        "b": "ds004504:sub-007",
+        "r": 0.9448625182194738
+      },
+      {
+        "a": "ds004504:sub-029",
+        "b": "ds004504:sub-024",
+        "r": 0.9413227748517208
+      }
+    ],
+    "exact_duplicate_rows": 0
+  }
+}

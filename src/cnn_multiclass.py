@@ -17,6 +17,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_sp
 from torch import nn
 
 from src import data
+from src.q1.guards import assert_disjoint, assert_no_labels
 from src.cnn import (BATCH, DEVICE, LR, MAX_EPOCHS, OUT, PATIENCE, SEEDS, WD, ScalogramCNN,
                      load_subjects, norm_stats, stack)
 from src.features import feature_names
@@ -94,6 +95,7 @@ def cross_validate(seed: int):
                                            stratify=y_subj[tr])
         Xf, yf, _ = stack(fit_ids, S, lab)
         Xv, yv, _ = stack(va_ids, S, lab)
+        assert_disjoint(fit=fit_ids, val=va_ids, test=te_ids)
         Xt, _, ot = stack(te_ids, S)
         mu, sd = norm_stats(Xf)
         Xf, Xv, Xt = (Xf - mu) / sd, (Xv - mu) / sd, (Xt - mu) / sd

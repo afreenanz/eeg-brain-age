@@ -19,6 +19,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.metrics import roc_auc_score
 
 from src import data
+from src.q1.guards import assert_disjoint, assert_no_labels
 from src.cnn import OUT, SEEDS, metrics
 from src.train import fit_bias, corrected_age
 
@@ -47,6 +48,7 @@ def stacked_cv(df: pd.DataFrame, use=("cnn", "bag")) -> np.ndarray:
     cv = RepeatedStratifiedKFold(n_splits=N_SPLITS, n_repeats=N_REPEATS, random_state=SEED)
     for k, (tr, te) in enumerate(cv.split(df, y)):
         trd, ted = df.iloc[tr], df.iloc[te]
+        assert_disjoint(train=trd.subject_id, test=ted.subject_id)
         hc = trd[trd.group == "C"]
         bias = fit_bias(hc.age.values, hc.pred.values)
 

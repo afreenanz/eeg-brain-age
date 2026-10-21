@@ -24,6 +24,7 @@ from sklearn.svm import SVC
 from torch import nn
 
 from src import data
+from src.q1.guards import assert_disjoint, assert_no_labels
 from src.cnn import OUT, SEED, metrics, predict_epochs, subject_probs, train_one
 from src.combine import paired_bootstrap_auc
 from src.features import feature_names
@@ -58,6 +59,7 @@ def run_classic(folds: pd.DataFrame) -> dict[str, pd.Series]:
         p = pd.Series(np.nan, index=df.subject_id)
         for f in sorted(df.fold.unique()):
             tr, te = df.fold != f, df.fold == f
+            assert_disjoint(train=df.subject_id[tr], test=df.subject_id[te])
             gs = GridSearchCV(est, grid, scoring="roc_auc",
                               cv=StratifiedKFold(5, shuffle=True, random_state=SEED))
             gs.fit(df.loc[tr, cols].values, y[tr])
@@ -110,6 +112,7 @@ def run_eegnet(folds: pd.DataFrame) -> pd.Series:
                                            stratify=y_subj[tr.values])
         Xf, yf, _ = stack(fit_ids)
         Xv, yv, ov = stack(va_ids)
+        assert_disjoint(fit=fit_ids, val=va_ids, test=te_ids)
         Xt, _, ot = stack(te_ids, with_y=False)
         mu, sd = Xf.mean((0, 2), keepdims=True), Xf.std((0, 2), keepdims=True) + 1e-6
         Xf, Xv, Xt = (Xf - mu) / sd, (Xv - mu) / sd, (Xt - mu) / sd

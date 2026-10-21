@@ -22,6 +22,7 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 from torch import nn
 
 from src import data
+from src.q1.guards import assert_disjoint, assert_no_labels
 from src.scalograms import available_subjects, subject_scalograms
 
 SEED = 42
@@ -139,11 +140,15 @@ def metrics(y, p, thr=0.5) -> dict:
 
 def cross_validate(seed: int = SEED, verbose: bool = True,
                    permute_seed: int | None = None, transform=None,
-                   make_model=None, explain: bool = False) -> tuple[pd.DataFrame, list]:
+                   make_model=None, explain: bool = False,
+                   occlude: dict | None = None) -> tuple[pd.DataFrame, list]:
     """permute_seed: shuffle AD/HC labels across subjects (permutation test null run).
     transform: function applied to each subject's scalogram array (ablations).
     make_model: model factory (default ScalogramCNN).
-    explain: also return out-of-fold Grad-CAM frequency profiles for each test subject."""
+    explain: also return out-of-fold Grad-CAM frequency profiles for each test subject.
+    occlude: {name: (freq_row_mask or None, channel_mask or None)}; for each entry the test
+             scalograms are re-scored with those rows/channels set to 0 (= training mean after
+             standardization). Used to test whether explanations reflect model behaviour."""
     meta, S = load_subjects()
     if transform is not None:
         S = {k: transform(v) for k, v in S.items()}
@@ -161,6 +166,7 @@ def cross_validate(seed: int = SEED, verbose: bool = True,
                                            stratify=y_subj[tr])
         Xf, yf, _ = stack(fit_ids, S, labels)
         Xv, yv, ov = stack(va_ids, S, labels)
+        assert_disjoint(fit=fit_ids, val=va_ids, test=te_ids)
         Xt, _, ot = stack(te_ids, S)
         mu, sd = norm_stats(Xf)
         Xf, Xv, Xt = (Xf - mu) / sd, (Xv - mu) / sd, (Xt - mu) / sd
@@ -172,8 +178,17 @@ def cross_validate(seed: int = SEED, verbose: bool = True,
             for s in te_ids:
                 cam, _ = gradcam(model, Xt[ot == s], target_ad=bool(ps[s] >= 0.5))
                 cams[s] = cam.mean((0, 2))
+        occ = {}
+        for oname, (fmask, cmask) in (occlude or {}).items():
+            Xo = Xt.copy()
+            if fmask is not None:
+                Xo[:, :, fmask, :] = 0
+            if cmask is not None:
+                Xo[:, cmask, :, :] = 0
+            occ[oname] = subject_probs(predict_epochs(model, Xo.astype(np.float32)), ot)
         for s in te_ids:
             row = {"subject_id": s, "fold": fold, "p_ad": float(ps[s])}
+            row.update({f"p_occ_{k}": float(v[s]) for k, v in occ.items()})
             if explain:
                 row["gradcam_profile"] = cams[s].tolist()
             rows.append(row)

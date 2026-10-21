@@ -24,6 +24,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from src import data
+from src.q1.guards import assert_disjoint, assert_no_labels
 from src.features import feature_names
 from src.harmonize import ComBat
 
@@ -133,6 +134,9 @@ def transfer(df: pd.DataFrame, fs: str, model_name: str, include_hc: bool, comba
 
     def fit_predict(train_hc: pd.DataFrame, test: pd.DataFrame) -> np.ndarray:
         train = pd.concat([dm, train_hc]) if include_hc else dm
+        key = lambda d: (d.dataset + ":" + d.subject_id).tolist()  # noqa: E731
+        assert_disjoint(train=key(train), test=key(test))
+        assert_no_labels(key(train), dict(zip(key(tgt), tgt[group_col])), ["A", "F"])
         Xtr, Xte = train[cols].values, test[cols].values
         if combat:
             # Fit on healthy subjects only: Dortmund + the HC that are allowed in.
