@@ -16,5 +16,5 @@ warning: main.tex:51: Underfull \hbox (badness 10000) in paragraph at lines 50--
 warning: main.tex:65: Underfull \hbox (badness 1430) in paragraph at lines 64--65
 warning: warnings were issued by the TeX engine; use --print and/or --keep-logs for details.
 note: Running xdvipdfmx ...
-note: Writing `main.pdf` (700.787109375 KiB)
+note: Writing `main.pdf` (700.005859375 KiB)
 note: Skipped writing 2 intermediate files (use --keep-intermediates to keep them)
