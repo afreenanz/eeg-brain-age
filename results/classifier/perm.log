@@ -1,0 +1,114 @@
+  permutation 41/100: null AUC 0.547
+  permutation 42/100: null AUC 0.550
+  permutation 43/100: null AUC 0.490
+  permutation 44/100: null AUC 0.423
+  permutation 45/100: null AUC 0.493
+  permutation 46/100: null AUC 0.501
+  permutation 47/100: null AUC 0.435
+  permutation 48/100: null AUC 0.682
+  permutation 49/100: null AUC 0.628
+  permutation 50/100: null AUC 0.438
+  permutation 51/100: null AUC 0.501
+  permutation 52/100: null AUC 0.376
+  permutation 53/100: null AUC 0.630
+  permutation 54/100: null AUC 0.503
+  permutation 55/100: null AUC 0.546
+  permutation 56/100: null AUC 0.443
+  permutation 57/100: null AUC 0.500
+  permutation 58/100: null AUC 0.550
+  permutation 59/100: null AUC 0.511
+  permutation 60/100: null AUC 0.469
+  permutation 61/100: null AUC 0.409
+  permutation 62/100: null AUC 0.618
+  permutation 63/100: null AUC 0.549
+  permutation 64/100: null AUC 0.433
+  permutation 65/100: null AUC 0.493
+  permutation 66/100: null AUC 0.439
+  permutation 67/100: null AUC 0.467
+  permutation 68/100: null AUC 0.535
+  permutation 69/100: null AUC 0.564
+  permutation 70/100: null AUC 0.351
+  permutation 71/100: null AUC 0.621
+  permutation 72/100: null AUC 0.533
+  permutation 73/100: null AUC 0.480
+  permutation 74/100: null AUC 0.417
+  permutation 75/100: null AUC 0.524
+  permutation 76/100: null AUC 0.307
+  permutation 77/100: null AUC 0.551
+  permutation 78/100: null AUC 0.496
+  permutation 79/100: null AUC 0.478
+  permutation 80/100: null AUC 0.625
+  permutation 81/100: null AUC 0.609
+  permutation 82/100: null AUC 0.578
+  permutation 83/100: null AUC 0.471
+  permutation 84/100: null AUC 0.498
+  permutation 85/100: null AUC 0.534
+  permutation 86/100: null AUC 0.579
+  permutation 87/100: null AUC 0.528
+  permutation 88/100: null AUC 0.510
+  permutation 89/100: null AUC 0.491
+  permutation 90/100: null AUC 0.383
+  permutation 91/100: null AUC 0.348
+  permutation 92/100: null AUC 0.474
+  permutation 93/100: null AUC 0.487
+  permutation 94/100: null AUC 0.510
+  permutation 95/100: null AUC 0.508
+  permutation 96/100: null AUC 0.502
+  permutation 97/100: null AUC 0.529
+  permutation 98/100: null AUC 0.541
+  permutation 99/100: null AUC 0.431
+  permutation 100/100: null AUC 0.621
+{
+  "bootstrap_CI95": {
+    "AUC": {
+      "value": 0.8582375478927203,
+      "CI95": [
+        0.7567049808429119,
+        0.938721264367816
+      ]
+    },
+    "accuracy": {
+      "value": 0.8,
+      "CI95": [
+        0.6923076923076923,
+        0.8923076923076924
+      ]
+    },
+    "recall_AD": {
+      "value": 0.8333333333333334,
+      "CI95": [
+        0.6944444444444444,
+        0.9444444444444444
+      ]
+    },
+    "specificity": {
+      "value": 0.7586206896551724,
+      "CI95": [
+        0.5862068965517241,
+        0.896551724137931
+      ]
+    },
+    "precision_AD": {
+      "value": 0.8108108108108109,
+      "CI95": [
+        0.7142857142857143,
+        0.9166666666666666
+      ]
+    },
+    "F1": {
+      "value": 0.821917808219178,
+      "CI95": [
+        0.7272727272727273,
+        0.9066666666666666
+      ]
+    }
+  },
+  "permutation_test": {
+    "real_AUC": 0.8582375478927203,
+    "n_permutations": 100,
+    "null_mean": 0.5019731800766284,
+    "null_95th": 0.6208812260536398,
+    "null_max": 0.7164750957854406,
+    "p_value": 0.009900990099009901
+  }
+}
