@@ -43,3 +43,26 @@ all, it is only a clearly labelled supplementary CNN test.
 sub-010235 and sub-010281 are listed with an RSEEG folder on the LEMON server, but the folder is empty (HTTP 404 for all files). The available older sample is therefore 71 participants.
 
 sub-010219 and sub-010044: the published .vhdr/.vmrk headers reference data files under a different name (lemon_037.eeg, sub-010044eeg.eeg). The headers were corrected to point to the published .eeg/.vmrk files (originals kept as *.orig). sub-010285 has no eyes-closed (S210) markers and is excluded.
+
+## ADFSU external clinical validation (added 2026-10-22, BEFORE any ADFSU predictions)
+
+Data: OSF 2v5md (Vicchietti et al., Sci Rep 2023). 80 probable AD (NINCDS-ADRDA, DSM-III-R) and
+12 healthy elderly; 19 channels (10-20), 128 Hz, 8 s per recording; eyes closed and eyes open.
+Shared data are already band-limited to 0.5-30 Hz and artifact-cleaned; amplitudes in µV.
+**No ages** are provided, so brain-age/BAG and the normative model cannot be validated here.
+Only the classifiers are tested.
+
+Preprocessing: same pipeline (19 channels, average reference, 0.5-45 Hz, 250 Hz, 4 s epochs,
+2 s overlap, 150 µV rejection). The only change is the minimum-length rule (30 s / 10 epochs →
+8 s / 2 epochs), because each recording is 8 s.
+
+- **E1, frozen models (primary):** the final CNN (`models/cnn_classifier.pt`) and spectral
+  classifiers (logistic regression, RBF-SVM, random forest; tuned by inner CV on ds004504 AD+HC
+  only) are applied unchanged to ADFSU eyes-closed recordings.
+- **E2, acquisition-harmonized (secondary):** the same models retrained on ds004504 after applying
+  ADFSU's 0.5-30 Hz band limit to the ds004504 epochs. No ADFSU labels or data are used for
+  training, tuning or thresholds.
+- **Metrics:** subject-level AUC with stratified bootstrap 95% CI (primary); balanced accuracy,
+  sensitivity and specificity at P = 0.5. Eyes-open recordings are reported as a secondary
+  condition.
+- **Caveats to report:** 12 HC (wide CIs); 8 s recordings; unknown ages; different filtering.
