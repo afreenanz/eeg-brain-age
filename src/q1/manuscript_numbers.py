@@ -231,6 +231,30 @@ def main() -> None:
     va = J("08_robustness/cnn_valauc_stopping.json")
     m("valAucRunAUC", f(va["AUC"])); m("valAucRunAcc", pc(va["accuracy"]))
 
+    # ---- ADFSU external clinical validation
+    ex = J("06_external_validation/adfsu_external.json")
+    ec, eo = ex["Eyes_closed"], ex["Eyes_open"]
+    m("extNok", str(ec["n_ok"])); m("extNtot", str(ec["n_total"]))
+    m("extNad", str(ec["models"]["E1_cnn"]["n_AD"])); m("extNhc", str(ec["models"]["E1_cnn"]["n_HC"]))
+    nm = {"cnn": "Cnn", "svm": "Svm", "rf": "Rf", "logreg": "Lr"}
+    for k, n in nm.items():
+        for e, e_ in (("E1", "Frozen"), ("E2", "Lp")):
+            s_ = ec["models"][f"{e}_{k}"]
+            m(f"ext{e_}{n}AUC", f(s_["AUC"])); m(f"ext{e_}{n}CI", ci(s_["AUC_CI95"]))
+            m(f"ext{e_}{n}BA", pc(s_["balanced_accuracy"]))
+            m(f"ext{e_}{n}Sens", pc(s_["sensitivity"])); m(f"ext{e_}{n}Spec", pc(s_["specificity"]))
+        m(f"extEO{n}AUC", f(eo["models"][f"E1_{k}"]["AUC"]))
+    m("extNadEO", str(eo["models"]["E1_cnn"]["n_AD"])); m("extNhcEO", str(eo["models"]["E1_cnn"]["n_HC"]))
+    ext_rows = []
+    lab = {"cnn": "CWT-scalogram CNN", "svm": "RBF-SVM (spectral)", "rf": "Random forest (spectral)",
+           "logreg": "Logistic regression (spectral)"}
+    for k in ("cnn", "svm", "rf", "logreg"):
+        a_, b_ = ec["models"][f"E1_{k}"], ec["models"][f"E2_{k}"]
+        ext_rows.append(f"{lab[k]} & {mf[{'logreg': 'logreg'}.get(k, k) if k != 'cnn' else 'cnn_scalogram']['AUC']['value']:.2f} & "
+                        f"{a_['AUC']:.2f} {ci(a_['AUC_CI95'])} & {100*a_['balanced_accuracy']:.0f} & "
+                        f"{b_['AUC']:.2f} & {eo['models'][f'E1_{k}']['AUC']:.2f} \\\\")
+    (GEN / "table_external.tex").write_text("\n".join(ext_rows))
+
     # tables
     rows = []
     names = [("cnn_scalogram", "CWT-scalogram CNN"), ("eegnet", "EEGNet"), ("rf", "Random forest"),

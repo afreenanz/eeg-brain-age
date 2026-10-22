@@ -1,0 +1,234 @@
+{
+  "Eyes_closed": {
+    "n_total": 92,
+    "n_ok": 91,
+    "excluded": [
+      {
+        "subject_id": "Healthy_Paciente4",
+        "status": "Only 0 of 3 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 2. The recording may be too noisy or not in volts."
+      }
+    ],
+    "models": {
+      "E1_cnn": {
+        "AUC": 0.7840909090909092,
+        "AUC_CI95": [
+          0.6170454545454546,
+          0.9136363636363636
+        ],
+        "balanced_accuracy": 0.6778409090909091,
+        "sensitivity": 0.5375,
+        "specificity": 0.8181818181818182,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E2_cnn": {
+        "AUC": 0.7818181818181819,
+        "AUC_CI95": [
+          0.6192897727272727,
+          0.9136647727272726
+        ],
+        "balanced_accuracy": 0.6323863636363636,
+        "sensitivity": 0.5375,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E1_logreg": {
+        "AUC": 0.8909090909090909,
+        "AUC_CI95": [
+          0.7522443181818183,
+          0.9931818181818182
+        ],
+        "balanced_accuracy": 0.7823863636363637,
+        "sensitivity": 0.8375,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E1_svm": {
+        "AUC": 0.9534090909090909,
+        "AUC_CI95": [
+          0.8977272727272727,
+          0.9909374999999999
+        ],
+        "balanced_accuracy": 0.8573863636363637,
+        "sensitivity": 0.9875,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E1_rf": {
+        "AUC": 0.9488636363636364,
+        "AUC_CI95": [
+          0.8738352272727273,
+          0.9988636363636363
+        ],
+        "balanced_accuracy": 0.8511363636363636,
+        "sensitivity": 0.975,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E2_logreg": {
+        "AUC": 0.8784090909090909,
+        "AUC_CI95": [
+          0.7067897727272727,
+          0.9988636363636363
+        ],
+        "balanced_accuracy": 0.852840909090909,
+        "sensitivity": 0.8875,
+        "specificity": 0.8181818181818182,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E2_svm": {
+        "AUC": 0.9340909090909091,
+        "AUC_CI95": [
+          0.8488636363636364,
+          0.9897727272727272
+        ],
+        "balanced_accuracy": 0.8511363636363636,
+        "sensitivity": 0.975,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      },
+      "E2_rf": {
+        "AUC": 0.9420454545454545,
+        "AUC_CI95": [
+          0.8579261363636363,
+          0.9988920454545455
+        ],
+        "balanced_accuracy": 0.8511363636363636,
+        "sensitivity": 0.975,
+        "specificity": 0.7272727272727273,
+        "n_AD": 80,
+        "n_HC": 11
+      }
+    }
+  },
+  "Eyes_open": {
+    "n_total": 92,
+    "n_ok": 87,
+    "excluded": [
+      {
+        "subject_id": "AD_Paciente5",
+        "status": "Only 0 of 3 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 2. The recording may be too noisy or not in volts."
+      },
+      {
+        "subject_id": "AD_Paciente6",
+        "status": "Only 1 of 3 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 2. The recording may be too noisy or not in volts."
+      },
+      {
+        "subject_id": "AD_Paciente51",
+        "status": "Only 1 of 3 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 2. The recording may be too noisy or not in volts."
+      },
+      {
+        "subject_id": "AD_Paciente61",
+        "status": "Only 1 of 3 epochs passed the artifact check (peak-to-peak < 150 uV); need at least 2. The recording may be too noisy or not in volts."
+      },
+      {
+        "subject_id": "Healthy_Paciente5",
+        "status": "missing files in published data"
+      }
+    ],
+    "models": {
+      "E1_cnn": {
+        "AUC": 0.7212918660287082,
+        "AUC_CI95": [
+          0.5789174641148326,
+          0.8528708133971292
+        ],
+        "balanced_accuracy": 0.6788277511961722,
+        "sensitivity": 0.5394736842105263,
+        "specificity": 0.8181818181818182,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E2_cnn": {
+        "AUC": 0.7236842105263158,
+        "AUC_CI95": [
+          0.5837021531100478,
+          0.8492822966507177
+        ],
+        "balanced_accuracy": 0.6788277511961722,
+        "sensitivity": 0.5394736842105263,
+        "specificity": 0.8181818181818182,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E1_logreg": {
+        "AUC": 0.6961722488038278,
+        "AUC_CI95": [
+          0.5322667464114832,
+          0.8325358851674641
+        ],
+        "balanced_accuracy": 0.6220095693779905,
+        "sensitivity": 0.7894736842105263,
+        "specificity": 0.45454545454545453,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E1_svm": {
+        "AUC": 0.8217703349282296,
+        "AUC_CI95": [
+          0.6901913875598087,
+          0.9330143540669855
+        ],
+        "balanced_accuracy": 0.5322966507177034,
+        "sensitivity": 0.9736842105263158,
+        "specificity": 0.09090909090909091,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E1_rf": {
+        "AUC": 0.7721291866028708,
+        "AUC_CI95": [
+          0.6112141148325358,
+          0.8971291866028708
+        ],
+        "balanced_accuracy": 0.5454545454545454,
+        "sensitivity": 1.0,
+        "specificity": 0.09090909090909091,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E2_logreg": {
+        "AUC": 0.6208133971291866,
+        "AUC_CI95": [
+          0.4712320574162679,
+          0.7583732057416268
+        ],
+        "balanced_accuracy": 0.5179425837320575,
+        "sensitivity": 0.7631578947368421,
+        "specificity": 0.2727272727272727,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E2_svm": {
+        "AUC": 0.7990430622009569,
+        "AUC_CI95": [
+          0.6507177033492823,
+          0.9222787081339712
+        ],
+        "balanced_accuracy": 0.5322966507177034,
+        "sensitivity": 0.9736842105263158,
+        "specificity": 0.09090909090909091,
+        "n_AD": 76,
+        "n_HC": 11
+      },
+      "E2_rf": {
+        "AUC": 0.7535885167464115,
+        "AUC_CI95": [
+          0.59686004784689,
+          0.8792165071770334
+        ],
+        "balanced_accuracy": 0.5909090909090909,
+        "sensitivity": 1.0,
+        "specificity": 0.18181818181818182,
+        "n_AD": 76,
+        "n_HC": 11
+      }
+    }
+  }
+}

@@ -47,3 +47,11 @@ Grad-CAM stability (3 seeds) · artifact thresholds 100/150/200 µV · sex-strat
 ## Resume instructions
 `git checkout q1-upgrade`; run commands in `13_reproducibility/REPRODUCE.md`. Every manuscript
 number regenerates via `python -m src.q1.manuscript_numbers`; verify with `python -m src.q1.consistency`.
+
+## Guide feedback round (2026-10-22)
+- Title revised to reflect the contribution (AD detection: CNN classification + brain-age regression; feature-dependent BAG; external validation).
+- Manasa M (guide) added as second author in all three papers; acknowledgment updated.
+- **External clinical validation (V1, partial):** ADFSU (Vicchietti et al., Sci Rep 2023; OSF 2v5md), plan pre-registered in commit bb6acb5.
+  `python -m src.q1.external_adfsu` → `06_external_validation/`. Eyes-closed 80 AD / 11 HC: frozen SVM AUC 0.95, RF 0.95, LR 0.89, CNN 0.78.
+  Classifier only: ADFSU has no ages, so brain age is not externally validated (CAUEEG/BrainLat still the target).
+- Explicit "Contribution of this result" statements added to each Results subsection and the Conclusion.

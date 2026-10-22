@@ -9,24 +9,24 @@
 
 \begin{document}
 
-\title{Explainable Classification and Brain-Age Regression of Resting-State EEG in Alzheimer's Disease: The Sign of the Brain-Age Gap Depends on Spectral Features}
+\title{Alzheimer's Disease Detection from Resting-State EEG Using Explainable CNN Classification and Brain-Age Regression: Feature-Dependent Brain-Age Gaps and External Validation}
 
-\author{Aayush~Soni, Aamal~Magdum, Afreen~Anz, and~Aparna~Sankar%
+\author{Aayush~Soni, Manasa~M, Aamal~Magdum, Afreen~Anz, and~Aparna~Sankar%
 \thanks{The authors are with the Department of Computer Science and Engineering, B.\,M.\,S. College of Engineering, Bengaluru, India.}}
 
-\markboth{}{Soni \MakeLowercase{\textit{et al.}}: Explainable classification and brain-age regression of EEG in AD}
+\markboth{}{Soni \MakeLowercase{\textit{et al.}}: AD detection from EEG by classification and brain-age regression}
 \maketitle
 
 % =====================================================================
 \begin{abstract}
 \emph{Background:} Resting-state EEG supports two complementary approaches to Alzheimer's disease (AD): discriminative classification, and normative brain-age regression, whose brain-age gap (BAG) is expected to show ``accelerated aging''; alpha-band EEG studies report positive BAG in AD. We developed and evaluated both approaches under an audited, leakage-controlled protocol.
-\emph{Methods:} A ridge brain-age model was trained on healthy adults (Dortmund Vital Study, $n=\nDort{}$, 20--70 years) and transferred to a clinical cohort (OpenNeuro ds004504: \nAD{} AD, \nHC{} healthy controls [HC], \nFTD{} frontotemporal dementia [FTD]). Patients were never used for training, harmonization, bias correction or model selection. We report leave-one-HC-out bias correction, nested model selection, age/sex adjustment, a permutation test that retrains the model ($N=\bagPermN{}$), an external healthy cohort (MPI-LEMON, $n=\nLemon{}$), a pre-registered feature-family analysis and a multivariate normative-deviation model. A CWT-scalogram CNN and four baselines were evaluated on identical subject-level folds, with nested stacking and occlusion-tested Grad-CAM.
-\emph{Results:} The full-spectrum BAG was negative in AD ($d=\bagD{}$, 95\% CI \bagDci{}; age- and sex-adjusted difference \adjCoef{} years, \adjP{}; permutation \bagPermP{}). It was absent in FTD ($d=\bagFTDd{}$) and not shown by healthy older adults from an independent site. The sign depended on the features: alpha-only models made AD look older ($d=\famAlphaD{}$), slow-wave and aperiodic models made it look younger ($d=\famSlowD{}$, \famAperD{}), and \famAgree{} single-family models followed a pre-registered direction prediction (sign test \famSignP{}). A multivariate normative-deviation score separated AD from HC better than BAG (AUC \normAUC{} vs.\ \bagAUC{}) but also deviated in FTD. The CNN reached AUC \cnnAUC{} and accuracy \cnnAcc{} (three seeds), statistically indistinguishable from spectral baselines and EEGNet. BAG added no information to the CNN in nested stacking (\nestDiffP{}). Grad-CAM was stable across seeds, but occlusion did not confirm its emphasis on theta.
-\emph{Conclusion:} The direction of the EEG brain-age gap in AD is a property of the feature set, not of the disease. AD EEG is better described as a multivariate deviation from normative aging than as accelerated or delayed aging. Validation in an independent AD cohort is needed.
+\emph{Methods:} A ridge brain-age model was trained on healthy adults (Dortmund Vital Study, $n=\nDort{}$, 20--70 years) and transferred to a clinical cohort (OpenNeuro ds004504: \nAD{} AD, \nHC{} healthy controls [HC], \nFTD{} frontotemporal dementia [FTD]). Patients were never used for training, harmonization, bias correction or model selection. We report leave-one-HC-out bias correction, nested model selection, age/sex adjustment, a permutation test that retrains the model ($N=\bagPermN{}$), an external healthy cohort (MPI-LEMON, $n=\nLemon{}$), a pre-registered feature-family analysis and a multivariate normative-deviation model. A CWT-scalogram CNN and four baselines were evaluated on identical subject-level folds, with nested stacking and occlusion-tested Grad-CAM, and the frozen classifiers were externally validated on an independent Brazilian AD cohort (ADFSU: \extNad{} AD, \extNhc{} HC) under a pre-registered plan.
+\emph{Results:} The full-spectrum BAG was negative in AD ($d=\bagD{}$, 95\% CI \bagDci{}; age- and sex-adjusted difference \adjCoef{} years, \adjP{}; permutation \bagPermP{}). It was absent in FTD ($d=\bagFTDd{}$) and not shown by healthy older adults from an independent site. The sign depended on the features: alpha-only models made AD look older ($d=\famAlphaD{}$), slow-wave and aperiodic models made it look younger ($d=\famSlowD{}$, \famAperD{}), and \famAgree{} single-family models followed a pre-registered direction prediction (sign test \famSignP{}). A multivariate normative-deviation score separated AD from HC better than BAG (AUC \normAUC{} vs.\ \bagAUC{}) but also deviated in FTD. The CNN reached AUC \cnnAUC{} and accuracy \cnnAcc{} (three seeds), statistically indistinguishable from spectral baselines and EEGNet. BAG added no information to the CNN in nested stacking (\nestDiffP{}). Grad-CAM was stable across seeds, but occlusion did not confirm its emphasis on theta. On the external AD cohort, frozen spectral classifiers transferred well (SVM AUC \extFrozenSvmAUC{}, random forest \extFrozenRfAUC{}) and the CNN less well (AUC \extFrozenCnnAUC{}).
+\emph{Conclusion:} The direction of the EEG brain-age gap in AD is a property of the feature set, not of the disease. AD EEG is better described as a multivariate deviation from normative aging than as accelerated or delayed aging. The classifiers generalize to an independent clinical site; external validation of brain age requires an AD cohort with recorded ages.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Alzheimer's disease, electroencephalography, brain age, normative modeling, continuous wavelet transform, convolutional neural network, data leakage, explainable AI, Grad-CAM
+Alzheimer's disease, electroencephalography, brain age, normative modeling, continuous wavelet transform, convolutional neural network, data leakage, explainable AI, Grad-CAM, external validation
 \end{IEEEkeywords}
 
 % =====================================================================
@@ -37,11 +37,11 @@ Two computational strategies exploit these changes. \emph{Discriminative classif
 
 The accelerated-aging interpretation assumes that disease moves the EEG \emph{along} the healthy-aging trajectory. Many spectral features change in healthy aging, however, and AD need not change all of them in the same direction. If it does not, the sign of an EEG brain-age gap would depend on which features the age model uses. Small clinical EEG cohorts are also vulnerable to leakage and analytic flexibility~\cite{brookshire2024,varoquaux2018}.
 
-We therefore asked four questions under an audited, leakage-controlled protocol. (Q1) What is the sign of a full-spectrum resting-state BAG in AD, and does it survive leakage control, covariates and an external healthy site? (Q2) Does the sign depend on the spectral features of the age model, as predicted from feature-wise aging and disease directions? (Q3) Is a multivariate normative-deviation score more informative than a scalar BAG? (Q4) How does an explainable CWT-scalogram CNN compare with baselines, and do BAG or Grad-CAM add reliable information?
+We therefore asked four questions under an audited, leakage-controlled protocol. (Q1) What is the sign of a full-spectrum resting-state BAG in AD, and does it survive leakage control, covariates and an external healthy site? (Q2) Does the sign depend on the spectral features of the age model, as predicted from feature-wise aging and disease directions? (Q3) Is a multivariate normative-deviation score more informative than a scalar BAG? (Q4) How does an explainable CWT-scalogram CNN compare with baselines, do BAG or Grad-CAM add reliable information, and do the classifiers generalize to an independent clinical cohort?
 
 Our contributions are:
 \begin{enumerate}
-\item An explainable classification module (CWT-scalogram CNN) benchmarked against four baselines on identical subject folds, with nested stacking, ablations, a three-class (HC/AD/FTD) extension and occlusion-validated Grad-CAM.
+\item An explainable classification module (CWT-scalogram CNN) benchmarked against four baselines on identical subject folds, with nested stacking, ablations, a three-class (HC/AD/FTD) extension, occlusion-validated Grad-CAM and pre-registered external validation on an independent AD cohort from another country.
 \item A normative brain-age regression module whose full-spectrum BAG is robustly negative in AD under extensive leakage control and an external healthy cohort.
 \item A pre-registered demonstration that the BAG sign is feature-dependent, which reconciles our result with positive alpha-based gaps.
 \item Evidence that a multivariate normative-deviation score outperforms the scalar BAG but is not AD-specific, and that BAG adds interpretability rather than accuracy to the classifier. All code, saved predictions and an application producing per-subject reports are released.
@@ -234,6 +234,8 @@ Cohort & $n$ & Age, mean $\pm$ SD (range) & Female & MMSE \\
 
 \emph{External healthy cohort: MPI-LEMON.} 62-channel EEG at 2500\,Hz; older group (5-year age bins, 55--80; bin midpoints used, $\pm2.5$ years label noise); eyes-closed blocks only; $n=\nLemon{}$ of \lemNavail{} available. Never used to train the main model; its analysis plan was committed before processing.
 
+\emph{External clinical cohort: ADFSU}~\cite{vicchietti2023}. Resting-state EEG from Brazil (OSF 2v5md): \extNad{} AD patients (NINCDS-ADRDA and DSM-III-R criteria) and 12 HC, 19 channels (10--20), 128\,Hz, 8\,s segments band-limited to 0.5--30\,Hz by the data providers, eyes-closed and eyes-open conditions. Ages and sex are not provided per subject, so the cohort can test the classifiers but not brain age. Recordings passed through the same preprocessing; only the minimum-length rule was relaxed to accept 8\,s recordings (at least 2 clean 4\,s epochs). The cohort was never used for training, tuning or threshold selection, and the analysis plan was committed before any prediction.
+
 \emph{Data quality.} On average about 80\% of epochs were retained for clinical subjects and 90\% for the healthy cohort; median peak-to-peak amplitudes were similar across cohorts, confirming consistent units and scaling.
 
 % =====================================================================
@@ -248,6 +250,8 @@ Cohort & $n$ & Age, mean $\pm$ SD (range) & Female & MMSE \\
 \emph{Sex.} Within HC, women had lower BAG than men (\hcFem{} vs.\ \hcMale{} years, \hcSexP{}). Stratified by sex, the AD effect was present in men ($d=\stratMaleD{}$, \stratMaleP{}; \stratMalenAD{} AD vs.\ \stratMalenHC{} HC) and in the same direction but not significant in women ($d=\stratFemD{}$, \stratFemP{}; \stratFemnAD{} vs.\ \stratFemnHC{}).
 
 \emph{External healthy site (LEMON).} Test L1 (unchanged model): predictions for \lemN{} LEMON adults had MAE \lemMAE{} years and did not track age within 55--80 years ($r=\lemR{}$). Uncorrected gaps were \rawGapLem{}$\pm$\rawGapLemsd{} years in LEMON HC, \rawGapHc{}$\pm$\rawGapHcsd{} in clinical HC and \rawGapAd{}$\pm$\rawGapAdsd{} in AD (Fig.~\ref{fig:lemon}). Healthy adults from the two sites did not differ ($d=\lemHCd{}$, \lemHCp{}), whereas AD differed from the external healthy cohort ($d=\lemADd{}$, \lemADp{}), arguing against a site or age artifact. Test L2 (retraining on healthy cohorts spanning 20--80 years, $n=\ltwoN{}$, healthy CV MAE \ltwoMAE{} years) preserved the effect ($d=\ltwoD{}$, \ltwoP{}; AUC \ltwoAUC{}; FTD $d=\ltwoFTDd{}$), negative in \ltwoStableYounger{} of \ltwoStable{} stable configurations, although HC transfer was weaker (MAE \ltwoHCMAE{} years).
+
+\emph{Contribution of this result:} a leakage-controlled demonstration that the full-spectrum EEG brain-age gap is \emph{negative} in AD, robust to covariates, preprocessing and an external healthy site, contrary to the expected ``accelerated aging''.
 
 \emph{Clinical association and classification.} BAG was not associated with MMSE in AD ($\rho=\mmseRho{}$, \mmseP{}; Fig.~\ref{fig:mmse}). As a single-feature classifier, BAG gave AUC \bagAUC{}, accuracy \bagAcc{}, precision \bagPrec{}, recall \bagRec{}, specificity \bagSpec{} and F1 \bagFone{} (decision rule BAG $<\bagThr{}$ years).
 
@@ -303,6 +307,8 @@ Analysis & Cohen's $d$ [95\% CI] & MWU \\
 \subsection{Q2: The sign of the BAG depends on the features}
 Table~\ref{tab:dir} and Fig.~\ref{fig:dir} contrast each family's correlation with age in healthy adults with its AD$-$HC effect. Alpha peak frequency, alpha power and the theta/alpha ratio change in the same direction in aging and AD, whereas beta power rises with age but falls in AD, and slow-wave power and the aperiodic component fall with age but rise in AD. Consistent with this, \famAgree{} single-family brain-age models followed the pre-registered direction (Table~\ref{tab:fam}, Fig.~\ref{fig:fam}; sign test \famSignP{}). An alpha-only model made AD look \emph{older} ($d=\famAlphaD{}$, \famAlphaP{}), qualitatively reproducing~\cite{otero2026}; slow-wave and aperiodic models made AD look younger ($d=\famSlowD{}$, \famAperD{}). The full-spectrum model, dominated by these families, was negative ($d=\famFullD{}$). The single mismatch, the theta/alpha ratio, was not significant.
 
+\emph{Contribution of this result:} a pre-registered explanation of why EEG brain-age studies disagree: the sign of the gap is determined by the feature families of the age model.
+
 \begin{table}[t]
 \centering
 \caption{Healthy-aging direction vs.\ AD effect per feature family}
@@ -348,6 +354,8 @@ Feature family & Predicted & $d$ (AD$-$HC) & $p$ & Agree \\
 \subsection{Q3: Normative deviation outperforms the scalar BAG}
 The multivariate deviation score separated AD from HC with $d=\normD{}$ \normDci{} and AUC \normAUC{} (cross-validated \normAUCcv{}; age/sex-adjusted \normAdjP{}), vs.\ BAG AUC \bagAUC{}. It was not AD-specific: FTD also deviated ($d=\normFTDd{}$, \normFTDp{}) and AD did not differ from FTD (\normADFTDp{}). AD showed elevated slow-wave and aperiodic $z$-scores and reduced alpha, beta and alpha-peak $z$-scores (Fig.~\ref{fig:norm}).
 
+\emph{Contribution of this result:} a multivariate normative-deviation score is a more informative regression-based marker than the scalar BAG, although not AD-specific.
+
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.85\textwidth]{fig_normative_deviation.png}
@@ -357,6 +365,8 @@ The multivariate deviation score separated AD from HC with $d=\normD{}$ \normDci
 
 \subsection{Q4a: CNN classification and baselines}
 Table~\ref{tab:seeds} reports the CNN over three seeds: mean AUC \cnnAUC{} (range \cnnAUClo{}--\cnnAUChi{}), accuracy \cnnAcc{}, precision \cnnPrec{}, recall \cnnRec{}, specificity \cnnSpecM{}, F1 \cnnFone{}. For the primary seed: AUC \cnnPrimAUC{} \cnnPrimAUCci{}, PR-AUC \cnnPRAUC{}, balanced accuracy \cnnBalAcc{}, Brier \cnnBrier{}, ECE \cnnECE{} (Fig.~\ref{fig:calib}); permutation \cnnPermP{} ($N=\cnnPermN{}$). With the originally used early-stopping criterion (validation AUC; Section~\ref{sec:disc}) the AUC was \valAucRunAUC{} (accuracy \valAucRunAcc{}). On identical folds EEGNet (\aucEEGNet{}), random forest (\aucRF{}), SVM (\aucSVM{}) and logistic regression (\aucLR{}) were statistically indistinguishable from the CNN (\holmText{}; Table~\ref{tab:models}, Figs.~\ref{fig:roc} and~\ref{fig:forest}). Performance was similar for women and men (AUC \subFemAUC{} vs.\ \subMaleAUC{}) and across age tertiles (\subAgeLo{}--\subAgeHi{}).
+
+\emph{Contribution of this result:} an explainable CNN benchmarked fairly (identical subject folds, calibration, permutation testing) against four baselines, without inflated claims of superiority.
 
 \begin{table}[t]
 \centering
@@ -409,6 +419,8 @@ Model & AUC [95\% CI] & PR-AUC & Bal.\ acc. & Sens. & Spec. & Brier \\
 \subsection{Q4b: Combining classification and regression}
 In fully nested stacking the CNN alone gave AUC \nestCnnAUC{} (accuracy \nestCnnAcc{}), BAG alone \nestBagAUC{} (vs.\ chance \nestBagP{}) and CNN+BAG \nestCombAUC{} (accuracy \nestCombAcc{}; $\Delta=\nestDiff{}$, \nestDiffCI{}, \nestDiffP{}). A simpler repeated-CV stacking gave the same conclusion (\rcvCombAUC{} vs.\ \rcvCnnAUC{}, \rcvP{}). BAG therefore adds interpretability, not accuracy.
 
+\emph{Contribution of this result:} a fully nested test of whether brain age adds to an EEG AD classifier, showing that the two methods are complementary in interpretation rather than in accuracy.
+
 \subsection{Q4c: Ablations and three-class classification}
 Ablations (Table~\ref{tab:abl}; three seeds each) gave mean AUCs from \ablMin{} to \ablFull{}: 8 channels \ablEight{}, 40\% of epochs \ablSixty{}, only 8--40\,Hz \ablFast{}, only 1--8\,Hz \ablSlow{}, no time axis \ablNoTime{}, suggesting that low-density montages and shorter recordings are viable. For HC/AD/FTD the CNN reached balanced accuracy \mcBalAcc{} (macro AUC \mcAUC{}, macro F1 \mcMacroF{}) vs.\ \mcRFBalAcc{} (\mcRFAUC{}) for a random forest; recall was \mcRecHC{} (HC), \mcRecAD{} (AD) and \mcRecFTD{} (FTD), with \mcFTDasAD{} of \mcNFTD{} FTD subjects labelled AD (Table~\ref{tab:conf3}).
 
@@ -442,6 +454,8 @@ True $\backslash$ predicted & HC & AD & FTD \\
 \subsection{Q4d: Explainability and its validation}
 Final-model Grad-CAM band importance toward AD was theta \gcFinThetaAD{}, alpha \gcFinAlphaAD{}, beta \gcFinBetaAD{}, delta \gcFinDeltaAD{}; toward HC alpha \gcFinAlphaHC{} and beta \gcFinBetaHC{} (Fig.~\ref{fig:gradcam}); the top AD channels were \gcTopChAD{} (Fig.~\ref{fig:chan}). Out-of-fold Grad-CAM was stable across seeds ($r$ \gcStabLo{}--\gcStabHi{}; theta \gcTheta{}, alpha \gcAlpha{}, beta \gcBeta{}; Fig.~\ref{fig:gcoof}). Occlusion, however, showed that the models depended mostly on beta (AUC drop \occBeta{}) and delta (\occDelta{}), little on alpha (\occAlpha{}) and not on theta (\occTheta{}); spatially, occipital (\occOccipital{}), frontal (\occFrontal{}) and temporal (\occTemporal{}) regions mattered most (Fig.~\ref{fig:xai}). Grad-CAM importance therefore did not identify the information the model needs.
 
+\emph{Contribution of this result:} evidence that Grad-CAM explanations of EEG classifiers must be validated by perturbation; stability across seeds is not faithfulness.
+
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.9\textwidth]{cnn_gradcam.png}
@@ -470,6 +484,26 @@ Final-model Grad-CAM band importance toward AD was theta \gcFinThetaAD{}, alpha 
 \label{fig:xai}
 \end{figure}
 
+\begin{table*}[!t]
+\centering
+\caption{External validation on ADFSU (eyes closed, \extNad{} AD vs.\ \extNhc{} HC). Internal: out-of-fold AUC on ds004504; E1: frozen models; E2: retrained after 30\,Hz low-pass; EO: E1 on eyes-open}
+\label{tab:ext}
+\begin{tabular}{lccccc}
+\toprule
+Model & Internal & E1 AUC [95\% CI] & E1 BA\,(\%) & E2 & EO \\
+\midrule
+\tableinput{table_external.tex}
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Q4e: External clinical validation (ADFSU)}
+In the primary analysis (E1) the final models trained only on ds004504 were applied unchanged to ADFSU eyes-closed recordings (\extNad{} AD, \extNhc{} HC; one HC excluded by the artifact rule). With the fixed 0.5 decision threshold, the RBF-SVM reached AUC \extFrozenSvmAUC{} \extFrozenSvmCI{}, balanced accuracy \extFrozenSvmBA{} (sensitivity \extFrozenSvmSens{}, specificity \extFrozenSvmSpec{}); the random forest \extFrozenRfAUC{} \extFrozenRfCI{}; logistic regression \extFrozenLrAUC{} \extFrozenLrCI{}; and the CNN \extFrozenCnnAUC{} \extFrozenCnnCI{} (balanced accuracy \extFrozenCnnBA{}, sensitivity \extFrozenCnnSens{}, specificity \extFrozenCnnSpec{}) (Table~\ref{tab:ext}). Retraining on ds004504 after the same 30\,Hz low-pass (E2) did not change the ranking (CNN \extLpCnnAUC{}, SVM \extLpSvmAUC{}, random forest \extLpRfAUC{}, logistic regression \extLpLrAUC{}). On eyes-open recordings (\extNadEO{} AD, \extNhcEO{} HC), which the models never saw during training, AUCs were lower (SVM \extEOSvmAUC{}, CNN \extEOCnnAUC{}). Spectral models thus transferred better across site, country, amplifier and sampling rate than the CNN, whose time--frequency images are more sensitive to recording length and bandwidth. With only \extNhc{} HC, the CIs are wide.
+
+
+
+\emph{Contribution of this result:} a pre-registered external validation of ds004504-trained AD classifiers on an independent cohort from another country, showing that subject-independent spectral classifiers generalize, and that internal parity between CNN and spectral models does not imply equal transferability.
+
 \subsection{Discussion}
 \label{sec:disc}
 \emph{Why the sign depends on the features.} Healthy aging and AD share alpha slowing but move absolute slow-wave power, beta power and the aperiodic component in opposite directions~\cite{babiloni2020}. A brain-age model projects the EEG onto the healthy-aging axis; its sign in AD is determined by which features dominate that projection. Our pre-registered family analysis confirmed this (\famAgree{}), and an alpha-only model reproduced the positive gaps of~\cite{otero2026}. Positive and negative EEG BAGs in AD are therefore not contradictory findings but different projections of the same deviation. The multivariate normative score, which does not force the deviation onto an age axis, captured it better (AUC \normAUC{}), supporting normative-deviation reporting over a ``brain age''.
@@ -482,23 +516,25 @@ Final-model Grad-CAM band importance toward AD was theta \gcFinThetaAD{}, alpha 
 
 % =====================================================================
 \section{Conclusion and Contribution}
-Under strictly subject-independent evaluation on public data, this work contributes:
+This work detects AD from resting-state EEG with two complementary methods, classification and brain-age regression, and contributes:
 
 \emph{1) Explainable classification.} A CWT-scalogram CNN reached AUC \cnnAUC{} and accuracy \cnnAcc{}, statistically indistinguishable from spectral baselines and EEGNet; ablations and a three-class extension are reported, and Grad-CAM explanations were found stable but not faithful under occlusion.
 
-\emph{2) Normative brain-age regression.} A full-spectrum brain-age model trained only on healthy adults places AD \emph{younger} ($d=\bagD{}$, \bagDci{}), robustly to leakage control, covariates, preprocessing, training-set size and age coverage, and not reproduced by healthy older adults from an independent site.
+\emph{2) External clinical validation.} Under a pre-registered plan, frozen classifiers generalized to an independent Brazilian AD cohort (SVM AUC \extFrozenSvmAUC{}, random forest \extFrozenRfAUC{}, CNN \extFrozenCnnAUC{}), showing that spectral models transfer better than the CNN.
 
-\emph{3) Feature-dependent sign.} The direction of the gap is a property of the feature set (\famAgree{} pre-registered predictions; alpha-only models place AD older), reconciling conflicting reports; AD EEG is better described as a multivariate normative deviation (AUC \normAUC{}).
+\emph{3) Normative brain-age regression.} A full-spectrum brain-age model trained only on healthy adults places AD \emph{younger} ($d=\bagD{}$, \bagDci{}), robustly to leakage control, covariates, preprocessing, training-set size and age coverage, and not reproduced by healthy older adults from an independent site.
 
-\emph{4) Combination.} BAG adds interpretability, not accuracy, to the classifier (nested \nestDiffP{}); both are delivered by an open application producing per-subject reports.
+\emph{4) Feature-dependent sign.} The direction of the gap is a property of the feature set (\famAgree{} pre-registered predictions; alpha-only models place AD older), reconciling conflicting reports; AD EEG is better described as a multivariate normative deviation (AUC \normAUC{}).
 
-\emph{Limitations.} The clinical cohort is small and single-site; there is no independent AD cohort (CAUEEG and BrainLat access pending). MMSE is the only clinical scale and there are no MCI subjects. LEMON ages are binned. Our features are sensor-space and average-referenced over 19 channels, whereas~\cite{otero2026} used source-space alpha; the qualitative agreement of our alpha-only model does not establish quantitative equivalence. The effect size depends on the artifact threshold.
+\emph{5) Combination.} BAG adds interpretability, not accuracy, to the classifier (nested \nestDiffP{}); both are delivered by an open application producing per-subject reports.
 
-\emph{Future work.} External validation on independent clinical cohorts with AD and MCI; source-space and connectivity features within the same family framework; lifespan normative models of EEG spectra; longitudinal prediction; and prospective evaluation with low-density, short recordings.
+\emph{Limitations.} The development cohort is small and single-site. The external AD cohort validates the classifiers only: it has no ages (so brain age could not be validated externally), only \extNhc{} usable HC, 8\,s recordings and a 30\,Hz band limit. MMSE is the only clinical scale and there are no MCI subjects. LEMON ages are binned. Our features are sensor-space and average-referenced over 19 channels, whereas~\cite{otero2026} used source-space alpha; the qualitative agreement of our alpha-only model does not establish quantitative equivalence. The effect size depends on the artifact threshold.
+
+\emph{Future work.} Brain-age validation on larger independent clinical cohorts with ages, AD and MCI (e.g., CAUEEG, BrainLat); source-space and connectivity features within the same family framework; lifespan normative models of EEG spectra; longitudinal prediction; and prospective evaluation with low-density, short recordings.
 
 % =====================================================================
 \section*{Data and Code Availability}
-OpenNeuro ds004504 and ds005385 and MPI-LEMON are public. All code, saved models, out-of-fold predictions, fold assignments, seeds, audit reports and the scripts generating every number in this paper are in the project repository.
+OpenNeuro ds004504 and ds005385, MPI-LEMON and ADFSU (OSF 2v5md) are public. All code, saved models, out-of-fold predictions, fold assignments, seeds, audit reports and the scripts generating every number in this paper are in the project repository.
 
 \section*{Ethics Statement}
 Only publicly available, de-identified data collected under the original studies' approvals were used. No new data were collected.
@@ -507,13 +543,13 @@ Only publicly available, de-identified data collected under the original studies
 During the preparation of this work the authors used Claude (Anthropic), an AI assistant, to help write and debug the analysis code and to draft and edit the manuscript text. The authors defined the research questions and study design, reviewed and verified all code, analyses and results, checked every reference against bibliographic databases, and take full responsibility for the content of this publication.
 
 \section*{Author Contributions}
-All authors contributed equally to conceptualization, methodology, software, validation, formal analysis, investigation, data curation, visualization, and writing (original draft, review and editing). All authors read and approved the final manuscript.
+A.~Soni, A.~Magdum, A.~Anz and A.~Sankar contributed equally to conceptualization, methodology, software, validation, formal analysis, investigation, data curation, visualization, and writing (original draft). Manasa~M supervised the project and contributed to methodology and to reviewing and editing the manuscript. All authors read and approved the final manuscript.
 
 \section*{Funding and Conflicts of Interest}
 This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors. The authors declare no conflict of interest.
 
 \section*{Acknowledgment}
-We thank Prof.~Manasa, Department of Computer Science and Engineering, B.\,M.\,S. College of Engineering, for her guidance and supervision, and the investigators of ds004504, ds005385 and MPI-LEMON for sharing their data.
+We thank the investigators of ds004504, ds005385, MPI-LEMON and ADFSU for sharing their data.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
