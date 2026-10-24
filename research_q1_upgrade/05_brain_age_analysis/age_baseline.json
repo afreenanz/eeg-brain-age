@@ -1,0 +1,39 @@
+{
+  "dortmund_10fold": {
+    "n": 200,
+    "age_range": "22-70",
+    "model_MAE": 9.19869142472493,
+    "model_r": 0.5993499148116058,
+    "dummy_training_mean_MAE": 11.879055555555556
+  },
+  "clinical_HC_loo": {
+    "n": 29,
+    "age_range": "57-78",
+    "model_MAE": 7.362581635066308,
+    "dummy_training_mean_MAE": 15.996975196612222,
+    "dummy_cohort_mean_MAE": 4.6748768472906415
+  },
+  "LEMON_L1": {
+    "n": 70,
+    "age_range": "57.5-77.5",
+    "model_MAE": 10.674943097565489,
+    "dummy_training_mean_MAE": 15.67342482844667,
+    "dummy_cohort_mean_MAE": 3.9585921325051783
+  },
+  "engemann2022_reference": {
+    "LEMON": {
+      "age_range": "20-77",
+      "handcrafted": 10.23,
+      "best": 7.75,
+      "best_model": "deep",
+      "dummy": 18.7
+    },
+    "TUAB": {
+      "age_range": "0-95",
+      "handcrafted": 10.75,
+      "best": 7.75,
+      "best_model": "deep",
+      "dummy": 13.55
+    }
+  }
+}

@@ -6,6 +6,7 @@ E2 (secondary): same models retrained on ds004504 after applying ADFSU's 0.5-30 
 No ADFSU label is used for training, tuning or thresholds.
 
 Run:  python -m src.q1.external_adfsu   -> research_q1_upgrade/06_external_validation/
+      python -m src.q1.external_adfsu --rate-cis   (only add sensitivity/specificity CIs)
 """
 from __future__ import annotations
 
@@ -76,6 +77,30 @@ def score(y, p):
             "sensitivity": float(recall_score(y, pred)),
             "specificity": float(recall_score(1 - y, 1 - pred)), "n_AD": int(y.sum()),
             "n_HC": int((1 - y).sum())}
+
+
+def wilson(k: int, n: int, z: float = 1.959964):
+    """Wilson score 95% CI for a proportion k/n."""
+    p = k / n
+    c = (p + z * z / (2 * n)) / (1 + z * z / n)
+    h = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return [float(c - h), float(c + h)]
+
+
+def add_rate_cis() -> None:
+    """Add Wilson CIs for sensitivity/specificity (threshold 0.5) from the saved predictions.
+    Uses only saved outputs; no model is re-run."""
+    res = json.loads((OUT / "adfsu_external.json").read_text())
+    for cond in res:
+        ok = pd.read_csv(OUT / f"adfsu_predictions_{cond}.csv").query("status == 'ok'")
+        y = ok.y.values
+        for c, s_ in res[cond]["models"].items():
+            pred = (ok[c].values >= 0.5).astype(int)
+            s_["sensitivity_CI95_wilson"] = wilson(int(((pred == 1) & (y == 1)).sum()), int((y == 1).sum()))
+            s_["specificity_CI95_wilson"] = wilson(int(((pred == 0) & (y == 0)).sum()), int((y == 0).sum()))
+    (OUT / "adfsu_external.json").write_text(json.dumps(res, indent=2, default=float))
+    print({c: (round(s["specificity"], 3), [round(v, 3) for v in s["specificity_CI95_wilson"]])
+           for c, s in res["Eyes_closed"]["models"].items()})
 
 
 def train_cnn(S: dict, labels: dict, n_epochs: int):
@@ -181,4 +206,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    add_rate_cis() if "--rate-cis" in sys.argv else (main(), add_rate_cis())

@@ -231,6 +231,25 @@ def main() -> None:
     va = J("08_robustness/cnn_valauc_stopping.json")
     m("valAucRunAUC", f(va["AUC"])); m("valAucRunAcc", pc(va["accuracy"]))
 
+    # ---- age model vs dummy baselines
+    ab = J("05_brain_age_analysis/age_baseline.json")
+    dmb, hcb, lmb = ab["dortmund_10fold"], ab["clinical_HC_loo"], ab["LEMON_L1"]
+    m("dmDummyMAE", f(dmb["dummy_training_mean_MAE"], 1))
+    m("hcDummyMAE", f(hcb["dummy_training_mean_MAE"], 1)); m("hcCohortDummyMAE", f(hcb["dummy_cohort_mean_MAE"], 1))
+    m("lemDummyMAE", f(lmb["dummy_training_mean_MAE"], 1)); m("lemCohortDummyMAE", f(lmb["dummy_cohort_mean_MAE"], 1))
+    eg = ab["engemann2022_reference"]
+    m("engLemHand", f(eg["LEMON"]["handcrafted"], 1)); m("engLemDummy", f(eg["LEMON"]["dummy"], 1))
+    m("engLemBest", f(eg["LEMON"]["best"], 1)); m("engTuabHand", f(eg["TUAB"]["handcrafted"], 1))
+    m("engTuabDummy", f(eg["TUAB"]["dummy"], 1)); m("engTuabBest", f(eg["TUAB"]["best"], 1))
+    g = lambda x: f"{x:.1f}"
+    (GEN / "table_age_baseline.tex").write_text("\n".join([
+        f"Healthy training, 10-fold CV & {dmb['n']} & {dmb['age_range'].replace('-', '--')} & {g(dmb['model_MAE'])} & {g(dmb['dummy_training_mean_MAE'])} & -- \\\\",
+        f"Clinical HC, out-of-fold & {hcb['n']} & {hcb['age_range'].replace('-', '--')} & {g(hcb['model_MAE'])} & {g(hcb['dummy_training_mean_MAE'])} & {g(hcb['dummy_cohort_mean_MAE'])} \\\\",
+        f"LEMON (external, L1) & {lmb['n']} & 57.5--77.5 & {g(lmb['model_MAE'])} & {g(lmb['dummy_training_mean_MAE'])} & {g(lmb['dummy_cohort_mean_MAE'])} \\\\",
+        "\\midrule",
+        f"\\cite{{engemann2022}}: LEMON, handcrafted / best & -- & 20--77 & {g(eg['LEMON']['handcrafted'])} / {g(eg['LEMON']['best'])} & {g(eg['LEMON']['dummy'])} & -- \\\\",
+        f"\\cite{{engemann2022}}: TUAB, handcrafted / best & -- & 0--95 & {g(eg['TUAB']['handcrafted'])} / {g(eg['TUAB']['best'])} & {g(eg['TUAB']['dummy'])} & -- \\\\"]))
+
     # ---- ADFSU external clinical validation
     ex = J("06_external_validation/adfsu_external.json")
     ec, eo = ex["Eyes_closed"], ex["Eyes_open"]
@@ -243,6 +262,8 @@ def main() -> None:
             m(f"ext{e_}{n}AUC", f(s_["AUC"])); m(f"ext{e_}{n}CI", ci(s_["AUC_CI95"]))
             m(f"ext{e_}{n}BA", pc(s_["balanced_accuracy"]))
             m(f"ext{e_}{n}Sens", pc(s_["sensitivity"])); m(f"ext{e_}{n}Spec", pc(s_["specificity"]))
+            m(f"ext{e_}{n}SensCI", "[" + ", ".join(pc(v) for v in s_["sensitivity_CI95_wilson"]) + "]")
+            m(f"ext{e_}{n}SpecCI", "[" + ", ".join(pc(v) for v in s_["specificity_CI95_wilson"]) + "]")
         m(f"extEO{n}AUC", f(eo["models"][f"E1_{k}"]["AUC"]))
     m("extNadEO", str(eo["models"]["E1_cnn"]["n_AD"])); m("extNhcEO", str(eo["models"]["E1_cnn"]["n_HC"]))
     ext_rows = []

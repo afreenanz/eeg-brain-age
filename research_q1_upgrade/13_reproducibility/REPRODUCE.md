@@ -33,6 +33,7 @@ python -m src.q1.normative              # 05: normative-deviation model
 python -m src.q1.family_brainage        # 05: pre-registered feature-family analysis
 python -m src.q1.xai                    # 07: occlusion + Grad-CAM stability (~15 min GPU)
 python -m src.q1.threshold_sens         # 08: 100/150/200 µV (one process per threshold)
+python -m src.q1.age_baseline           # 05: age-model MAE vs dummy regressors
 python -m src.q1.figures                # 11: figures
 python -m src.q1.manuscript_numbers     # 12: numbers.tex + tables
 python -m src.q1.consistency            # manuscript vs recomputed values (must pass)
