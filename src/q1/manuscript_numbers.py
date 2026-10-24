@@ -117,7 +117,7 @@ def main() -> None:
     if th:
         ds = [r["d_AD_HC"] for r in th]
         m("thrDlo", f(min(ds))); m("thrDhi", f(max(ds)))
-        m("thrAdjMaxP", pv(max(r["adjusted_p"] for r in th)))
+        m("thrAdjMaxP", f"\\ensuremath{{p\\leq{max(r['adjusted_p'] for r in th):.2f}}}")
     else:
         m("thrDlo", TBD); m("thrDhi", TBD); m("thrAdjMaxP", TBD)
     mm = s["mmse_correlation"]["AD"]; m("mmseRho", f(mm["rho"])); m("mmseP", pv(mm["p"]))
@@ -163,7 +163,7 @@ def main() -> None:
     m("nestCnnAUC", f(ns["cnn_only"]["AUC"])); m("nestBagAUC", f(ns["bag_only"]["AUC"]))
     m("nestCombAUC", f(ns["combined"]["AUC"])); m("nestDiff", f(ns["combined_minus_cnn_AUC"]["diff"], 3))
     m("nestDiffCI", ci(ns["combined_minus_cnn_AUC"]["CI95"])); m("nestDiffP", pv(ns["combined_minus_cnn_AUC"]["p_two_sided"]))
-    m("nestBagP", pv(ns["bag_minus_chance"]["p_two_sided"]))
+    m("nestBagP", pv(ns["bag_minus_chance"]["p_two_sided"])); m("bagLogAUC", f(mf["bag_only"]["AUC"]["value"]))
     m("nestCnnAcc", pc(ns["cnn_only"]["accuracy"])); m("nestCombAcc", pc(ns["combined"]["accuracy"]))
 
     x = J("07_explainability/xai_validation.json")
@@ -258,7 +258,7 @@ def main() -> None:
     # tables
     rows = []
     names = [("cnn_scalogram", "CWT-scalogram CNN"), ("eegnet", "EEGNet"), ("rf", "Random forest"),
-             ("svm", "RBF-SVM"), ("logreg", "Logistic regression"), ("bag_only", "Brain-age gap"),
+             ("svm", "RBF-SVM"), ("logreg", "Logistic regression"), ("bag_only", "Brain-age gap (logistic)"),
              ("combined", "CNN + BAG (stacking)")]
     for k, n in names:
         r = mf[k]
