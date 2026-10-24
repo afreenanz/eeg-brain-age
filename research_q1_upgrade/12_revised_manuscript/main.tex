@@ -516,7 +516,27 @@ In the primary analysis (E1) the final models trained only on ds004504 were appl
 
 % =====================================================================
 \section{Conclusion and Contribution}
-This work detects AD from resting-state EEG with two complementary methods, classification and brain-age regression, and contributes:
+This work detects AD from resting-state EEG with two complementary methods, classification and brain-age regression. Table~\ref{tab:contrib} summarizes what is new in this work and where it is shown; each contribution is detailed below.
+
+\begin{table*}[!t]
+\centering
+\caption{Summary of the contributions of this work and the supporting results}
+\label{tab:contrib}
+\footnotesize
+\begin{tabular}{p{0.4cm}p{4.2cm}p{9.4cm}l}
+\toprule
+\# & Contribution & Key result (this work) & Shown in \\
+\midrule
+1 & Explainable CNN classification of AD from CWT scalograms & AUC \cnnAUC{}, accuracy \cnnAcc{} (three seeds) on subject-level folds; on par with four baselines (\holmText{}); Grad-CAM stable across seeds but not confirmed by occlusion & Q4a, Q4c, Q4d \\
+2 & External clinical validation on an independent AD cohort & Frozen models on ADFSU (\extNad{} AD, \extNhc{} HC): SVM AUC \extFrozenSvmAUC{}, random forest \extFrozenRfAUC{}, CNN \extFrozenCnnAUC{}; spectral models transfer better than the CNN & Q4e, Table~\ref{tab:ext} \\
+3 & Leakage-controlled brain-age regression for AD & Full-spectrum BAG is negative in AD ($d=\bagD{}$, \bagDci{}; permutation \bagPermP{}); robust to covariates, preprocessing and an external healthy site (LEMON) & Q1, Table~\ref{tab:audit} \\
+4 & Feature-dependent sign of the brain-age gap & \famAgree{} pre-registered direction predictions confirmed; alpha-only models make AD look older, slow-wave/aperiodic models younger; normative deviation AUC \normAUC{} vs.\ BAG \bagAUC{} & Q2, Q3 \\
+5 & Combining classification and regression & BAG adds interpretability, not accuracy, to the CNN in fully nested stacking (\nestDiffP{}); open application with per-subject reports & Q4b \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+In detail, this work contributes:
 
 \emph{1) Explainable classification.} A CWT-scalogram CNN reached AUC \cnnAUC{} and accuracy \cnnAcc{}, statistically indistinguishable from spectral baselines and EEGNet; ablations and a three-class extension are reported, and Grad-CAM explanations were found stable but not faithful under occlusion.
 
